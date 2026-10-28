@@ -35,6 +35,18 @@ DATABASE_URL=postgresql://moleculejury:your_local_password@localhost:15432/molec
 
 `MODEL_FAST` handles specialists and image interpretation; `MODEL_SMART` handles the chair. Models must support structured outputs, and the fast model must support image inputs. The final decision uses **POST https://api.openai.com/v1/decisions** with **gpt-6-luna**, using the same `OPENAI_API_KEY`. Six generation calls plus one Decisions request are used for a normal discussion; image interpretation is one additional call. OpenAI API usage is billed to the configured project.
 
+## Deploy on Vercel
+
+The local Docker database at `localhost:15432` is reachable only from your computer. A Vercel deployment needs a hosted PostgreSQL database; the app's history, dossier, and jury routes cannot work without it. The page may build and load even while `/api/health` reports `database: false`.
+
+1. In the Vercel project, add a hosted Postgres integration (for example Neon) under Storage and connect it to the **Production** environment. A database provider may require a plan selection. Do not copy the local `.env.local` database URL to Vercel.
+2. Confirm the integration supplies `DATABASE_URL` or `POSTGRES_URL` to the Production environment. The app accepts either. The URL must point to the hosted database, not `localhost` or `127.0.0.1`. Keep `OPENAI_API_KEY` in Production too.
+3. Apply the schema once to that database. With the Vercel CLI installed, signed in, and linked to this project, run `vercel env run -- npm run db:migrate:remote`. This executes the two checked-in migrations against the project's configured database. `vercel env run -- npm run db:check:remote` verifies the tables afterward.
+4. Redeploy the production branch after changing environment variables. Existing deployments do not inherit newly added variables.
+5. Open `/api/health` on the deployed site. Expect `database: true`, `databaseStatus: "ready"`, `ai: true`, and `brain: true`. Then open History; `/api/runs` should respond successfully.
+
+`databaseStatus` explains the common failure: `not_configured` means no URL, `local_only` means a localhost URL was supplied to Vercel, `unreachable` means the hosted connection failed, and `schema_missing` means the database is reachable but the migrations have not been applied. It reports no credentials. The npm `cache-dir` warning and Next.js telemetry notice are informational and do not indicate a failed build.
+
 ## What is implemented
 
 - Compound names, SMILES, InChI/CAS resolution, protein names/accessions, PDB IDs, FASTA, SDF/MOL, PDB/CIF, PNG/JPEG, compositions, molecule–target pairs, and prose research questions.

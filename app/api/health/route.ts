@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { databaseStatus } from '@/lib/db/readiness';
 import { loadBrain } from '@/lib/brain-server';
 export async function GET() {
-  const [db, brain] = await Promise.allSettled([pool.query('SELECT 1'), loadBrain()]);
+  const [db, brain] = await Promise.allSettled([databaseStatus(), loadBrain()]);
+  const status = db.status === 'fulfilled' ? db.value : 'unreachable';
   return NextResponse.json(
     {
-      database: db.status === 'fulfilled',
+      database: status === 'ready',
+      databaseStatus: status,
       ai: !!process.env.OPENAI_API_KEY,
       brain: brain.status === 'fulfilled' && brain.value !== null,
     },

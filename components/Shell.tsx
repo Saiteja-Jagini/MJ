@@ -31,9 +31,12 @@ export function Shell() {
   const [draft, setDraft] = useState('');
   const [attachment, setAttachment] = useState<File | null>(null);
   const [analysisKey, setAnalysisKey] = useState(0);
-  const [health, setHealth] = useState<{ database: boolean; ai: boolean; brain: boolean } | null>(
-    null,
-  );
+  const [health, setHealth] = useState<{
+    database: boolean;
+    databaseStatus?: 'ready' | 'not_configured' | 'local_only' | 'unreachable' | 'schema_missing';
+    ai: boolean;
+    brain: boolean;
+  } | null>(null);
 
   useEffect(() => {
     fetch('/api/health')
@@ -181,13 +184,23 @@ export function Shell() {
         <div className="topbar-right">
           <span className="system-status">
             <span
-              className={health?.database && health?.ai ? 'status-dot' : 'status-dot pending'}
+              className={health?.database && health?.ai && health?.brain ? 'status-dot' : 'status-dot pending'}
             />
-            {health?.database && health?.ai
+            {health?.database && health?.ai && health?.brain
               ? 'Ready'
-              : health
-                ? 'Setup needs attention'
-                : 'Connecting'}
+              : !health
+                ? 'Connecting'
+                : health.databaseStatus === 'not_configured'
+                  ? 'Connect PostgreSQL'
+                  : health.databaseStatus === 'local_only'
+                    ? 'Use hosted PostgreSQL'
+                  : health.databaseStatus === 'unreachable'
+                    ? 'Database unreachable'
+                    : health.databaseStatus === 'schema_missing'
+                      ? 'Run database migrations'
+                      : !health.ai
+                        ? 'Configure OpenAI'
+                        : 'Setup needs attention'}
           </span>
         </div>
       </header>

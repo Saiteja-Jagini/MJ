@@ -1,5 +1,8 @@
 import { Pool } from 'pg';
-const p = new Pool({ connectionString: process.env.DATABASE_URL });
+import { databaseConnectionString } from '../lib/db/connection';
+if (!databaseConnectionString)
+  throw new Error('Set DATABASE_URL or POSTGRES_URL to a reachable PostgreSQL connection string.');
+const p = new Pool({ connectionString: databaseConnectionString });
 async function main() {
   try {
     const r = await p.query(

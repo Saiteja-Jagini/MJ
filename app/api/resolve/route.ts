@@ -3,10 +3,12 @@ import { ResolveInputSchema, resolveInput } from '@/lib/resolve';
 import { readJson, apiError } from '@/lib/http';
 import { getRun, saveResolvedSubjects } from '@/lib/db/repository';
 import { sessionId } from '@/lib/session';
+import { requireDatabaseReady } from '@/lib/db/readiness';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 export async function POST(req: Request) {
   try {
+    await requireDatabaseReady();
     const session = await sessionId();
     const input = ResolveInputSchema.parse(await readJson(req));
     const result = await resolveInput(input);

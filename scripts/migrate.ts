@@ -1,6 +1,9 @@
 import { Pool } from 'pg';
 import { readFileSync } from 'node:fs';
-const p = new Pool({ connectionString: process.env.DATABASE_URL });
+import { databaseConnectionString } from '../lib/db/connection';
+if (!databaseConnectionString)
+  throw new Error('Set DATABASE_URL or POSTGRES_URL to a hosted PostgreSQL connection string before migrating.');
+const p = new Pool({ connectionString: databaseConnectionString });
 async function main() {
   const c = await p.connect();
   try {
