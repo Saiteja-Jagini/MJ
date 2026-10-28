@@ -69,7 +69,9 @@ export function VerdictPanel({ verdict }: { verdict: FinalVerdict }) {
         ))}
       </div>
       <p className="verdict-footnote">
-        Percentages represent evidence-weighted jury confidence, not clinical outcome probabilities.
+        {verdict.decision
+          ? `Decided by OpenAI Decisions (${verdict.decision.model}). Percentages show its choice distribution, not clinical outcome probabilities. Request: ${verdict.decision.requestId ?? verdict.decision.id ?? 'identifier not supplied'}`
+          : 'Legacy weighted jury result (before Decisions API integration). Percentages are not clinical outcome probabilities.'}
       </p>
     </section>
   );

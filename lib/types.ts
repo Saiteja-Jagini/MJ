@@ -189,6 +189,26 @@ export type Anchor = z.infer<typeof AnchorSchema>;
 export type Driver = z.infer<typeof DriverSchema>;
 export type Structure = z.infer<typeof StructureSchema>;
 export type Dossier = z.infer<typeof DossierSchema>;
+export const DecisionSchema = z.object({
+  provider: z.literal('openai-decisions'),
+  id: z.string().min(1).nullable(),
+  requestId: z.string().nullable(),
+  model: z.literal('gpt-6-luna'),
+  choice: VerdictSchema,
+  probabilities: z
+    .object({
+      go: z.number().finite().min(0).max(1),
+      caution: z.number().finite().min(0).max(1),
+      nogo: z.number().finite().min(0).max(1),
+    })
+    .refine(
+      (v) => Math.abs(v.go + v.caution + v.nogo - 1) < 0.001,
+      'Decision probabilities must sum to one',
+    ),
+  confidence: z.number().finite().min(0).max(1),
+  evaluatedAt: z.string().datetime(),
+});
+export type Decision = z.infer<typeof DecisionSchema>;
 export const TurnSchema = z
   .object({
     role: RoleSchema,
@@ -207,10 +227,12 @@ export const TurnSchema = z
     reasons: z.array(z.string()).optional(),
     risks: z.array(z.string()).optional(),
     nextSteps: z.array(z.string()).optional(),
+    decision: DecisionSchema.optional(),
   })
   .refine((t) => Math.abs(t.go + t.caution + t.nogo - 100) < 0.02, 'Votes must sum to 100');
 export type Turn = z.infer<typeof TurnSchema>;
 export const FinalSchema = z.object({
+  decision: DecisionSchema.optional(),
   call: VerdictSchema,
   percent: VotesSchema,
   confidence: bounded,

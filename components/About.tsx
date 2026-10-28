@@ -35,18 +35,18 @@ export function About({
           </p>
         </div>
         <h3>
-          <Scale size={17} />A transparent vote
+          <Scale size={17} />A decision grounded in evidence
         </h3>
         <p>
-          The final distribution combines confidence-weighted specialist votes (50%), the chair’s
-          votes (30%), and deterministic rule evidence (20%). A rebuttal replaces the specialist’s
-          earlier vote. Every distribution sums to 100%.
+          OpenAI Decisions evaluates the dossier and specialist debate to choose GO, CAUTION, or
+          NO-GO. The chair explains that result and recommends next experiments. The final
+          percentages come directly from the Decisions choice distribution, rounded to total 100%.
         </p>
-        <div className="formula">final = 0.50 × specialists + 0.30 × chair + 0.20 × rules</div>
+        <div className="formula">evidence + debate → Decisions API → explained verdict</div>
         <p>
-          Specialist weights: Atom 1.0, Venom 1.2, Lock 1.1, Doubt 0.7. Confidence weights use 0.3 +
-          0.7 × confidence / 100. Overall confidence uses the gap between the top two outcomes,
-          discounted by evidence coverage.
+          During debate, weighted votes show a provisional direction. They do not override the final
+          API decision. Confidence is the API&apos;s separate confidence field, not a clinical
+          probability. Older saved analyses are labelled as legacy weighted results.
         </p>
         <p>
           Evidence grade: LOW below 25% coverage, MEDIUM below 60%, HIGH otherwise. Coverage below

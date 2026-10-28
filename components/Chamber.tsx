@@ -223,7 +223,9 @@ export function Chamber() {
                   </strong>
                   <p>
                     {s.verdict
-                      ? 'The evidence has been weighed.'
+                      ? s.verdict.decision
+                        ? 'Final decision from OpenAI Decisions.'
+                        : 'Saved legacy weighted assessment.'
                       : 'An estimate. The discussion can change it.'}
                   </p>
                 </div>

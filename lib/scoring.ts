@@ -45,19 +45,23 @@ export function finalize(
   }
   const a = sum ? { go: mix.go / sum, caution: mix.caution / sum, nogo: mix.nogo / sum } : prior;
   const chair = latest.get('chair');
+  const decision = chair?.decision;
   const c = chair ?? a;
-  const percent = normalize({
-    go: 0.5 * a.go + 0.3 * c.go + 0.2 * prior.go,
-    caution: 0.5 * a.caution + 0.3 * c.caution + 0.2 * prior.caution,
-    nogo: 0.5 * a.nogo + 0.3 * c.nogo + 0.2 * prior.nogo,
-  });
+  const percent = decision
+    ? normalize(decision.probabilities)
+    : normalize({
+        go: 0.5 * a.go + 0.3 * c.go + 0.2 * prior.go,
+        caution: 0.5 * a.caution + 0.3 * c.caution + 0.2 * prior.caution,
+        nogo: 0.5 * a.nogo + 0.3 * c.nogo + 0.2 * prior.nogo,
+      });
   const sorted = Object.values(percent).sort((a, b) => b - a);
   return {
-    call: winner(percent),
+    decision,
+    call: decision?.choice ?? winner(percent),
     percent,
-    confidence: Math.round(
-      Math.min(100, 2 * (sorted[0] - sorted[1])) * (0.4 + (0.6 * coverage) / 100),
-    ),
+    confidence: decision
+      ? Math.round(decision.confidence * 100)
+      : Math.round(Math.min(100, 2 * (sorted[0] - sorted[1])) * (0.4 + (0.6 * coverage) / 100)),
     evidenceGrade: coverage < 25 ? 'LOW' : coverage < 60 ? 'MEDIUM' : 'HIGH',
     evidenceCoverage: coverage,
     headline: chair?.headline ?? 'The jury is reviewing the evidence.',

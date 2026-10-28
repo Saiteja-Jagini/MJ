@@ -5,6 +5,8 @@ const state = vi.hoisted(() => ({
   fail: true,
   calls: [] as string[],
   verdict: null as any,
+  decisionFail: false,
+  decisionCalls: 0,
 }));
 vi.mock('../lib/session', () => ({
   sessionId: async () => '11111111-1111-4111-8111-111111111111',
@@ -71,8 +73,63 @@ vi.mock('../lib/ai/model', () => ({
   },
 }));
 import { POST } from '../app/api/jury/route';
+vi.mock('../lib/ai/decisions', () => ({
+  decide: async () => {
+    state.decisionCalls++;
+    if (state.decisionFail) {
+      state.decisionFail = false;
+      throw new Error('Decisions unavailable');
+    }
+    return {
+      provider: 'openai-decisions',
+      id: 'dec_retry',
+      requestId: null,
+      model: 'gpt-6-luna',
+      choice: 'CAUTION',
+      probabilities: { go: 0.2, caution: 0.6, nogo: 0.2 },
+      confidence: 0.6,
+      evaluatedAt: new Date().toISOString(),
+    };
+  },
+}));
 describe('jury recovery', () => {
+  it('saves the debate without issuing a verdict when Decisions fails, then resumes', async () => {
+    Object.assign(state, {
+      turns: [],
+      calls: [],
+      status: 'ready',
+      verdict: null,
+      fail: false,
+      decisionFail: true,
+      decisionCalls: 0,
+    });
+    vi.stubEnv('OPENAI_API_KEY', 'test-placeholder');
+    const req = () =>
+      new Request('http://localhost/api/jury', {
+        method: 'POST',
+        body: JSON.stringify({ runId: '22222222-2222-4222-8222-222222222222' }),
+      });
+    const first = await (await POST(req())).text();
+    expect(first).not.toContain('"t":"verdict"');
+    expect(state.turns).toHaveLength(5);
+    expect(state.verdict).toBeNull();
+    const second = await (await POST(req())).text();
+    expect(second).toContain('"t":"verdict"');
+    expect(state.turns).toHaveLength(6);
+    expect(state.calls).toHaveLength(6);
+    expect(state.decisionCalls).toBe(2);
+    vi.unstubAllEnvs();
+  });
   it('persists successful seats and resumes only missing stages after a failure', async () => {
+    Object.assign(state, {
+      turns: [],
+      calls: [],
+      status: 'ready',
+      verdict: null,
+      fail: true,
+      decisionFail: false,
+      decisionCalls: 0,
+    });
     vi.stubEnv('OPENAI_API_KEY', 'test-placeholder');
     const req = () =>
       new Request('http://localhost/api/jury', {
@@ -87,6 +144,7 @@ describe('jury recovery', () => {
     expect(second).toContain('"t":"verdict"');
     expect(state.turns).toHaveLength(6);
     expect(state.status).toBe('done');
+    expect(state.verdict.decision.id).toBe('dec_retry');
     expect(state.calls.filter((x) => x === 'chemist')).toHaveLength(1);
     expect(state.calls.filter((x) => x === 'toxicologist')).toHaveLength(2);
     expect(state.calls.filter((x) => x === 'pharmacologist')).toHaveLength(2);

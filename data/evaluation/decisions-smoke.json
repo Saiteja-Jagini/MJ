@@ -1,0 +1,27 @@
+{
+  "checkedAt": "2026-10-28T09:11:35.186Z",
+  "runId": "c6dd50bd-8e79-48c2-9786-98cee885444b",
+  "subject": "Fexofenadine",
+  "call": "GO",
+  "percent": {
+    "go": 70,
+    "caution": 30,
+    "nogo": 0
+  },
+  "decision": {
+    "provider": "openai-decisions",
+    "id": null,
+    "requestId": "req_5aabcaada2ff4ae6996731bac122a0a0",
+    "model": "gpt-6-luna",
+    "choice": "GO",
+    "probabilities": {
+      "go": 0.7,
+      "caution": 0.3,
+      "nogo": 0
+    },
+    "confidence": 0.55,
+    "evaluatedAt": "2026-10-28T09:11:32.039Z"
+  },
+  "turns": 6,
+  "restored": true
+}

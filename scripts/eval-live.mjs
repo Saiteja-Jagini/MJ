@@ -39,6 +39,7 @@ for (const seed of seeds) {
       expected: seed.truth.verdict,
       actual: verdict.call,
       percent: verdict.percent,
+      decision: verdict.decision,
       coverage: dossier.coverage,
       citations: verdict.citationsVerified,
       turns: verdict.transcript.length,
@@ -54,11 +55,11 @@ for (const seed of seeds) {
   }
   await mkdir('data/evaluation', { recursive: true });
   await writeFile(
-    'data/evaluation/live.json',
+    'data/evaluation/live-decisions.json',
     JSON.stringify(
       {
         generatedAt: new Date().toISOString(),
-        mode: 'Full live dossier and OpenAI jury; no ground-truth verdicts sent to the models.',
+        mode: 'Full live dossier, specialist debate, and OpenAI Decisions verdict; no ground-truth verdicts sent to the models.',
         results,
       },
       null,

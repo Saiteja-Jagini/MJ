@@ -5,7 +5,8 @@ import { readJson, apiError, AppError } from '@/lib/http';
 import { structured, modelError } from '@/lib/ai/model';
 import { ModelTurnSchema, ChairSchema } from '@/lib/ai/schemas';
 import { systemPrompt, turnPrompt } from '@/lib/ai/prompts';
-import { cleanTurn, finalize } from '@/lib/scoring';
+import { cleanTurn, finalize, normalize } from '@/lib/scoring';
+import { decide } from '@/lib/ai/decisions';
 import type { Role, Turn, JuryEvent } from '@/lib/types';
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -103,10 +104,25 @@ export async function POST(req: Request) {
           }
           if (!turns.some((t) => t.role === 'chair')) {
             stage('ruling');
-            const t = await generate('chair', 'ruling');
+            send({ t: 'thinking', role: 'chair' });
+            const decision = await decide(run.dossier, turns, abort.signal);
+            const t = await generate(
+              'chair',
+              'ruling',
+              `AUTHORITATIVE DECISIONS API RESULT: ${JSON.stringify(decision)}\nExplain this result using the supplied evidence. Your headline, reasons and next steps must reflect this decision. Acknowledge conflicting specialist views. Do not replace or recalculate the decision.`,
+            );
             if (!t) throw new Error('Chair needs retry');
+            Object.assign(t, normalize(decision.probabilities), {
+              confidence: Math.round(decision.confidence * 100),
+              decision,
+            });
             await record(t);
           }
+          if (!turns.find((t) => t.role === 'chair')?.decision)
+            throw new AppError(
+              'This unfinished analysis has a legacy chair result. Start a new analysis to obtain a Decisions API verdict.',
+              409,
+            );
           const verdict = finalize(
             turns,
             run.dossier.prior,
@@ -115,12 +131,15 @@ export async function POST(req: Request) {
           );
           await finishRun(runId, verdict);
           send({ t: 'verdict', verdict });
-        } catch {
+        } catch (error) {
           await failRun(runId).catch(() => {});
           send({
             t: 'error',
             role: 'system',
-            msg: 'The discussion is saved. Retry the jury to continue from the last successful turn.',
+            msg:
+              error instanceof AppError
+                ? error.message
+                : 'The discussion is saved. Retry the jury to continue from the last successful turn.',
           });
         } finally {
           clearInterval(heartbeat);
