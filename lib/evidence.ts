@@ -7,7 +7,7 @@ import {
   type Anchor,
   type Votes,
 } from './types';
-import { sourcePackets, pcProperties } from './sources';
+import { sourcePackets, pcProperties, fetchPacket, type Packet } from './sources';
 import { getStructure, proteinAnchors } from './structures';
 import { serverRDKit, validateMolecule, compatibleConformer } from './chem/server';
 import { analyze } from './chem/analyze';
@@ -29,6 +29,14 @@ const finite = (v: any) =>
   v !== null && v !== undefined && v !== '' && Number.isFinite(Number(v)) ? Number(v) : null;
 export async function buildDossier(subject: Subject): Promise<Dossier> {
   if (subject.kind === 'general_research') {
+    const visualComponents = subject.visualComponents ?? [];
+    const structures = await Promise.all(visualComponents.map(async (component) => {
+      const packets: Record<string, Packet> = component.uniprot ? {
+        uniprot: await fetchPacket(`https://rest.uniprot.org/uniprotkb/${encodeURIComponent(component.uniprot)}.json`),
+        alphafold: await fetchPacket(`https://alphafold.ebi.ac.uk/api/prediction/${encodeURIComponent(component.uniprot)}`),
+      } : {};
+      return getStructure(component, packets);
+    }));
     let web: Omit<EvidenceItem, 'id'>[] = [];
     let webFailed = false;
     try {
@@ -42,11 +50,28 @@ export async function buildDossier(subject: Subject): Promise<Dossier> {
     const evidence: EvidenceItem[] = web.map((item, index) => ({
       ...item, id: `E${index + 1}`,
     }));
+    for (const component of visualComponents) {
+      const url = component.cid
+        ? `https://pubchem.ncbi.nlm.nih.gov/compound/${component.cid}`
+        : component.uniprot
+          ? `https://www.uniprot.org/uniprotkb/${encodeURIComponent(component.uniprot)}/entry`
+          : undefined;
+      evidence.push({
+        id: `E${evidence.length + 1}`,
+        source: component.cid ? 'PubChem identity' : component.uniprot ? 'UniProt identity' : 'Validated input structure',
+        kind: 'identity',
+        text: `${component.name}: ${component.cid || component.uniprot ? 'reference-matched identity' : 'validated user-supplied structure'} for visualization only. ${component.note ?? ''} This structure does not establish benefit, harm, dose, or relevance to the stated use case.`,
+        domains: ['all'], quality: 'annotation', componentKey: component.key,
+        url, retrievedAt: new Date().toISOString(),
+      });
+    }
     evidence.push({
       id: `E${evidence.length + 1}`,
       source: 'Case scope',
       kind: 'scope',
-      text: 'No molecule or protein structure was verified for this question. Source summaries are web-research annotations, not independently measured case data. User observations remain unverified.',
+      text: visualComponents.length
+        ? 'Named entities were resolved for visualization. Their structures do not prove the stated claim. Source summaries are web-research annotations, not independently measured case data. User observations remain unverified.'
+        : 'No molecule or protein structure was verified for this question. Source summaries are web-research annotations, not independently measured case data. User observations remain unverified.',
       domains: ['all'],
       quality: 'heuristic',
       componentKey: '',
@@ -55,13 +80,18 @@ export async function buildDossier(subject: Subject): Promise<Dossier> {
     return DossierSchema.parse({
       version: 2, subject, evidence, anchors: [], drivers: [],
       prior: { go: 33, caution: 34, nogo: 33 },
-      coverage: 0, structure: [], chemistry: {},
+      coverage: 0, structure: structures, chemistry: {},
       sources: [{
         name: 'Current public web research',
         status: web.length ? 'available' : webFailed ? 'error' : 'missing',
         detail: web.length ? `${web.length} cited source summaries` : 'No cited source was returned',
         componentKey: '',
-      }],
+      }, ...visualComponents.map((component, index) => ({
+        name: `${component.name} structure`,
+        status: (structures[index].mode === 'none' ? 'missing' : 'available') as 'missing' | 'available',
+        detail: structures[index].provenance,
+        componentKey: component.key,
+      }))],
       createdAt: new Date().toISOString(),
     });
   }

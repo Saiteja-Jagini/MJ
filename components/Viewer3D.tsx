@@ -5,17 +5,19 @@ import type { Dossier } from '@/lib/types';
 import { Mol2D } from './Mol2D';
 import { useJury } from '@/lib/store';
 export function Viewer3D({ dossier }: { dossier: Dossier }) {
+  const components = dossier.subject.components.length
+    ? dossier.subject.components : dossier.subject.visualComponents ?? [];
   const root = useRef<HTMLDivElement>(null),
     viewer = useRef<any>(null);
-  const [selected, setSelected] = useState(dossier.structure[0]?.componentKey ?? 'c0');
-  const [flat, setFlat] = useState(false);
+  const [selected, setSelected] = useState(dossier.structure[0]?.componentKey ?? components[0]?.key ?? 'c0');
+  const [flat, setFlat] = useState(dossier.structure[0]?.mode === 'flat' || dossier.structure[0]?.mode === 'none');
   const [error, setError] = useState(false);
   const [ready, setReady] = useState(0);
   const active = useJury((s) => s.activeAnchor);
   const anchor = dossier.anchors.find((a) => a.id === active);
   const key = anchor?.componentKey ?? selected;
   const structure = dossier.structure.find((s) => s.componentKey === key) ?? dossier.structure[0];
-  const comp = dossier.subject.components.find((c) => c.key === key);
+  const comp = components.find((c) => c.key === key);
   useEffect(() => {
     if (flat || !structure?.text || !root.current) return;
     let cancelled = false;
@@ -154,7 +156,7 @@ export function Viewer3D({ dossier }: { dossier: Dossier }) {
     setSelected(k);
     useJury.getState().focus(`${k}:overview`);
   };
-  if (dossier.subject.kind === 'general_research')
+  if (!components.length)
     return (
       <section className="viewer-panel no-component-panel" aria-label="Molecular structure status">
         <div className="panel-heading"><span><Box size={16} /> Molecular structure</span></div>
@@ -176,9 +178,9 @@ export function Viewer3D({ dossier }: { dossier: Dossier }) {
           </button>
         </div>
       </div>
-      {dossier.subject.components.length > 1 && (
+      {components.length > 1 && (
         <div className="component-switch">
-          {dossier.subject.components.map((c) => (
+          {components.map((c) => (
             <button
               key={c.key}
               className={key === c.key ? 'selected' : ''}
@@ -229,7 +231,9 @@ export function Viewer3D({ dossier }: { dossier: Dossier }) {
               ? 'PREDICTED STRUCTURE'
               : structure?.mode === 'conformer'
                 ? 'COMPUTED CONFORMER'
-                : 'STRUCTURE VIEW'}
+                : structure?.mode === 'pdb'
+                  ? 'EXPERIMENTAL STRUCTURE'
+                  : 'STRUCTURE UNAVAILABLE'}
         </div>
         <div className="viewer-tools">
           <button

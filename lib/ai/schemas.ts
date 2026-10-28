@@ -32,8 +32,11 @@ export const ImageSchema = z.object({
 export const ResearchInputSchema = z.object({
   molecules: z
     .array(z.string())
-    .describe('Only molecule names or SMILES explicitly present in the input'),
-  target: z.string().describe('Protein or gene explicitly present, or empty string'),
+    .describe('All explicitly named medicines, drug ingredients, small molecules, metabolites, vitamins, ions, or SMILES in the input; no generic classes'),
+  proteins: z.array(z.string()).describe('All explicitly named proteins, peptide hormones, or genes; no generic cell, tissue, disease, or pathway names'),
+  target: z.string().describe('The explicitly named protein or gene targeted by a named molecule, or empty string'),
+  analysisMode: z.enum(['single_entity', 'mixture', 'molecule_target', 'general'])
+    .describe('Single entity, jointly used mixture, one molecule against one target, or general/comparative question'),
   question: z.string().describe('The research decision the user asks, in one short sentence'),
   useCase: z.string().describe('Intended scientific use or goal, or empty string'),
   issue: z

@@ -76,6 +76,7 @@ export const SubjectSchema = z
     title: z.string().min(1).max(500),
     question: z.string().min(1).max(500),
     components: z.array(ComponentSchema).max(8),
+    visualComponents: z.array(ComponentSchema).max(8).optional(),
     origin: z.enum(['text', 'smiles', 'file', 'image']),
     understood: z.string().max(2000),
     confidence: z.enum(['high', 'medium', 'low']),
@@ -104,7 +105,7 @@ export const SubjectSchema = z
   })
   .strict()
   .superRefine((s, c) => {
-    if (new Set(s.components.map((x) => x.key)).size !== s.components.length)
+    if (new Set([...s.components, ...(s.visualComponents ?? [])].map((x) => x.key)).size !== s.components.length + (s.visualComponents?.length ?? 0))
       c.addIssue({ code: 'custom', message: 'Duplicate component key' });
     const targets = s.components.filter((x) => x.role === 'target').length;
     if (s.kind === 'complex' && (targets !== 1 || s.components.length !== 2))
@@ -193,7 +194,7 @@ export const DossierSchema = z
     ),
   })
   .superRefine((d, c) => {
-    const keys = new Set(d.subject.components.map((x) => x.key));
+    const keys = new Set([...d.subject.components, ...(d.subject.visualComponents ?? [])].map((x) => x.key));
     const ids = new Set(d.evidence.map((x) => x.id));
     const anchors = new Set(d.anchors.map((x) => x.id));
     if (ids.size !== d.evidence.length || anchors.size !== d.anchors.length)

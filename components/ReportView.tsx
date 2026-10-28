@@ -4,7 +4,6 @@ import type { Dossier, FinalVerdict, Turn } from '@/lib/types';
 import { AnalysisReport, CitationDraft, Suggestions } from './AnalysisReport';
 import { FinalAssessmentCard } from './FinalAssessmentCard';
 import { Viewer3D } from './Viewer3D';
-import { Mol2D } from './Mol2D';
 import { EvidenceLedger } from './EvidenceLedger';
 import { Bubble } from './Bubble';
 
@@ -12,7 +11,6 @@ export function ReportView({ dossier, verdict, turns, archived = false }: {
   dossier: Dossier; verdict: FinalVerdict; turns: Turn[]; archived?: boolean;
 }) {
   const [view, setView] = useState<'result' | 'discussion' | 'evidence'>('result');
-  const molecule = dossier.subject.components.find((component) => component.smiles);
   return <div className="report-view">
     {archived && <nav className="archived-view-tabs" aria-label="Saved project views">
       {(['result', 'discussion', 'evidence'] as const).map((item) =>
@@ -32,11 +30,7 @@ export function ReportView({ dossier, verdict, turns, archived = false }: {
         <section className="report-structure-card" aria-label="Component structure">
           <span className="eyebrow">02 · STRUCTURE</span>
           <Viewer3D dossier={dossier} />
-          {molecule?.smiles && <div className="report-chemical-structure">
-            <strong>2D connectivity · {molecule.name}</strong>
-            <Mol2D smiles={molecule.smiles} />
-          </div>}
-          {dossier.subject.kind !== 'general_research' &&
+          {dossier.structure.length > 0 &&
             <p className="structure-accuracy-note">Structure provenance is shown in the viewer. Computed conformers and predictions are labeled.</p>}
         </section>
         <FinalAssessmentCard dossier={dossier} verdict={verdict} />

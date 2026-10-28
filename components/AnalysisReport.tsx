@@ -29,8 +29,10 @@ export function AnalysisReport({ dossier, verdict }: { dossier: Dossier; verdict
     <div className="review-points review-limits">
       <h3>Main limitation</h3>
       <p>{citedText(verdict.risks[0] ?? 'The available evidence is limited for this exact use case.', dossier)}</p>
-      {dossier.subject.kind === 'general_research' &&
+      {dossier.subject.kind === 'general_research' && !(dossier.subject.visualComponents?.length) &&
         <small>No molecular component was verified for a structure view.</small>}
+      {dossier.subject.kind === 'general_research' && Boolean(dossier.subject.visualComponents?.length) &&
+        <small>Named structures show identity only; they do not establish the outcome.</small>}
     </div>
   </section>;
 }

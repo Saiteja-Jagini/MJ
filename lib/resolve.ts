@@ -31,6 +31,7 @@ function generalSubject(
   input: string,
   parsed?: ParsedQuestion,
   origin: Subject['origin'] = 'text',
+  visualComponents: Component[] = [],
 ): Subject {
   const question = (parsed?.question.trim() || input.trim()).slice(0, 500);
   return SubjectSchema.parse({
@@ -39,8 +40,11 @@ function generalSubject(
     title: question.slice(0, 96),
     question,
     components: [],
+    visualComponents: visualComponents.slice(0, 8).map((item, index) => ({ ...item, key: `c${index}` })),
     origin,
-    understood: 'General research question. No molecular identity or 3D structure was verified.',
+    understood: visualComponents.length
+      ? 'General research question. Named molecular identities were verified for visualization; they do not establish the answer.'
+      : 'General research question. No molecular identity or 3D structure was verified.',
     confidence: 'low',
     userContext: input.trim(),
     analysisContext: {
@@ -175,7 +179,9 @@ async function resolveOne(raw: string, preferred?: string): Promise<Component[]>
       name: p.Title ?? name,
       ...valid,
       cid: p.CID,
-      note,
+      note: [note, p.Title && p.Title.toLowerCase() !== name.toLowerCase()
+        ? `PubChem matched “${name}” to “${p.Title}”; confirm the intended active ingredient, salt, and formulation.`
+        : ''].filter(Boolean).join(' '),
     });
   }
   const hits = up?.data?.results ?? [];
@@ -205,6 +211,7 @@ async function resolveOne(raw: string, preferred?: string): Promise<Component[]>
       uniprot: hit.primaryAccession,
       gene: hit.genes?.[0]?.geneName?.value,
       sequence: hit.sequence?.value,
+      note: `Human UniProt ${hit.primaryAccession}; check species and isoform for the intended case.`,
     });
   }
   if (!candidates.length) {
@@ -237,6 +244,42 @@ async function resolveOne(raw: string, preferred?: string): Promise<Component[]>
     );
   }
   return candidates;
+}
+async function resolveMentions(parsed: ParsedQuestion) {
+  const moleculeNames = [...new Set(parsed.molecules.map((name) => name.trim()).filter(Boolean))].slice(0, 8);
+  const proteinNames = [...new Set([...parsed.proteins, parsed.target].map((name) => name.trim()).filter(Boolean))].slice(0, 8);
+  const [moleculeResults, proteinResults] = await Promise.all([
+    Promise.allSettled(moleculeNames.map((name) => resolveOne(name, 'small_molecule'))),
+    Promise.allSettled(proteinNames.map((name) => resolveOne(name, 'protein'))),
+  ]);
+  const molecules = moleculeResults.flatMap((result) =>
+    result.status === 'fulfilled' ? result.value.filter((item) => item.role !== 'target' && !item.illustrative &&
+      (Boolean(item.cid) || Boolean(item.smiles && item.name === 'Unregistered molecule'))).slice(0, 1) : [],
+  );
+  const proteins = proteinResults.flatMap((result) =>
+    result.status === 'fulfilled' ? result.value.filter((item) => item.role === 'target' && Boolean(item.uniprot || item.pdbId)).slice(0, 1) : [],
+  );
+  const unresolved = [
+    ...moleculeNames.filter((_, index) => {
+      const result = moleculeResults[index];
+      return result.status === 'rejected' || !result.value.some((item) =>
+        item.role !== 'target' && !item.illustrative && (Boolean(item.cid) || Boolean(item.smiles && item.name === 'Unregistered molecule')));
+    }),
+    ...proteinNames.filter((_, index) => {
+      const result = proteinResults[index];
+      return result.status === 'rejected' || !result.value.some((item) =>
+        item.role === 'target' && Boolean(item.uniprot || item.pdbId));
+    }),
+  ];
+  const seen = new Set<string>();
+  const unique = (items: Component[]) => items.filter((item) => {
+    const id = item.cid ? `cid:${item.cid}` : item.uniprot ? `uniprot:${item.uniprot}` :
+      item.smiles ? `smiles:${item.smiles}` : `name:${item.name.toLowerCase()}`;
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+  return { molecules: unique(molecules), proteins: unique(proteins), unresolved };
 }
 export async function resolveInput(
   input: ResolveInput,
@@ -288,9 +331,10 @@ export async function resolveInput(
       if (!imageContext)
         throw new AppError('The image did not contain readable scientific content. Add a question or a clearer image.', 422);
       const parsed = await parseResearchQuestion(imageContext);
+      const visual = await resolveMentions(parsed);
       return {
-        candidates: [generalSubject(imageContext, parsed, 'image')],
-        notes: 'The image was summarized as unverified context. No molecular structure was verified.',
+        candidates: [generalSubject(imageContext, parsed, 'image', [...visual.molecules, ...visual.proteins])],
+        notes: 'The image was summarized as unverified context. Named entities are shown only when independently resolved.',
       };
     }
     const requestedTarget = input.targetText?.trim() || parsedAttachmentText?.target;
@@ -449,54 +493,35 @@ export async function resolveInput(
         candidates: [generalSubject(input.text)],
         notes: 'Entity extraction was unavailable. The question will proceed without a molecular model.',
       };
-    const names = [...new Set(parsed.molecules.map((x) => x.trim()).filter(Boolean))];
-    if (names.length > 8 || (parsed.target && names.length > 1))
-      throw new AppError(
-        'Analyze one molecule with one target, or up to eight mixture ingredients.',
-        422,
-      );
-    if (!names.length && !parsed.target)
+    const { molecules, proteins, unresolved } = await resolveMentions(parsed);
+    const all = [...molecules, ...proteins];
+    const mode = parsed.analysisMode;
+    const primary =
+      mode === 'single_entity' && all.length === 1 ? all :
+      mode === 'mixture' && molecules.length >= 2 && !proteins.length ? molecules :
+      mode === 'molecule_target' && molecules.length === 1 && proteins.length === 1
+        ? [molecules[0], proteins[0]] : null;
+    if (primary) {
+      const kind: Kind = primary.length === 1
+        ? primary[0].role === 'target' ? 'protein' : 'small_molecule'
+        : primary.some((item) => item.role === 'target') ? 'complex' : 'mixture';
+      const parsedContext = context(parsed, kind)!;
+      if (unresolved.length)
+        parsedContext.reportedObservations.unshift(
+          `Named component not verified: ${unresolved.join(', ')}`.slice(0, 500),
+        );
       return {
-        candidates: [generalSubject(input.text, parsed)],
-        notes: 'No molecular structure was verified. The jury will review the question and cited public sources.',
-      };
-    const moleculeResults = await Promise.allSettled(
-      names.map((name) => resolveOne(name, 'small_molecule')),
-    );
-    const failedNames = names.filter((_, index) => moleculeResults[index].status === 'rejected');
-    const molecules = moleculeResults.flatMap((result) =>
-      result.status === 'fulfilled' ? result.value.slice(0, 1) : [],
-    );
-    const targetResult = parsed.target
-      ? await resolveOne(parsed.target, 'protein').catch(() => [])
-      : [];
-    const protein = targetResult.slice(0, 1);
-    const unresolved = [...failedNames, ...(parsed.target && !protein.length ? [parsed.target] : [])];
-    if (!molecules.length && !protein.length) {
-      return {
-        candidates: [generalSubject(input.text, parsed)],
-        notes: 'A named structure could not be verified. The question will proceed without a molecular model.',
+        candidates: [subject(primary, 'text', unresolved.length ? 'low' : 'medium', parsedContext)],
+        notes: unresolved.length
+          ? `Verified structures: ${primary.map((item) => item.name).join(', ')}. Unverified names: ${unresolved.join(', ')}.`
+          : 'Verified molecular identity. User-reported observations remain unverified.',
       };
     }
-    const components = [...molecules, ...protein];
-    const kind: Kind = protein.length
-      ? molecules.length
-        ? 'complex'
-        : 'protein'
-      : molecules.length > 1
-        ? 'mixture'
-        : 'small_molecule';
-    const parsedContext = context(parsed, kind)!;
-    if (unresolved.length)
-      parsedContext.reportedObservations.unshift(
-        `Named component not verified: ${unresolved.join(', ')}`.slice(0, 500),
-      );
     return {
-      candidates: [subject(components, 'text', unresolved.length ? 'low' : 'medium', parsedContext)],
-      notes:
-        unresolved.length
-          ? `Verified structure shown for ${components.map((item) => item.name).join(', ')}. Could not verify: ${unresolved.join(', ')}.`
-          : 'Verified structure shown for the extracted component. Assay details in your text remain unverified.',
+      candidates: [generalSubject(input.text, parsed, 'text', all)],
+      notes: all.length
+        ? `Verified structures for visualization: ${all.map((item) => item.name).join(', ')}. The broader question remains a general evidence review.`
+        : 'No precise molecular identity was verified. The question will proceed without a structure.',
     };
   }
   const type = sniff(input.text);
@@ -514,9 +539,12 @@ export async function resolveInput(
     candidates = await resolveOne(input.text, input.preferredKind);
   } catch {
     const parsed = await parseResearchQuestion(input.text).catch(() => null);
+    const visual = parsed ? await resolveMentions(parsed) : null;
     return {
-      candidates: [generalSubject(input.text, parsed ?? undefined)],
-      notes: 'No molecular structure was verified. The question will proceed without a molecular model.',
+      candidates: [generalSubject(input.text, parsed ?? undefined, 'text', visual ? [...visual.molecules, ...visual.proteins] : [])],
+      notes: visual && visual.molecules.length + visual.proteins.length
+        ? 'Resolved named entities are available for structure visualization.'
+        : 'No molecular structure was verified. The question will proceed without a molecular model.',
     };
   }
   return {
