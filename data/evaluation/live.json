@@ -1,0 +1,234 @@
+{
+  "generatedAt": "2026-10-28T08:45:48.938Z",
+  "mode": "Full live dossier and OpenAI jury; no ground-truth verdicts sent to the models.",
+  "results": [
+    {
+      "id": "c01",
+      "name": "Imatinib",
+      "expected": "GO",
+      "actual": "GO",
+      "percent": {
+        "go": 44,
+        "caution": 41,
+        "nogo": 15
+      },
+      "coverage": 100,
+      "citations": "38/42",
+      "turns": 6,
+      "runId": "5fba4171-93fd-4431-9230-ee7eecc78e57",
+      "structure": [
+        "conformer"
+      ],
+      "seconds": 15
+    },
+    {
+      "id": "c02",
+      "name": "Gefitinib",
+      "expected": "GO",
+      "actual": "CAUTION",
+      "percent": {
+        "go": 37,
+        "caution": 45,
+        "nogo": 18
+      },
+      "coverage": 100,
+      "citations": "45/45",
+      "turns": 6,
+      "runId": "48fec6bc-92ea-4b2c-80bb-e214885ece87",
+      "structure": [
+        "conformer"
+      ],
+      "seconds": 16
+    },
+    {
+      "id": "c03",
+      "name": "Pioglitazone",
+      "expected": "CAUTION",
+      "actual": "CAUTION",
+      "percent": {
+        "go": 37,
+        "caution": 44,
+        "nogo": 19
+      },
+      "coverage": 100,
+      "citations": "31/35",
+      "turns": 6,
+      "runId": "de52afb4-3efc-4d45-8402-4cb671107157",
+      "structure": [
+        "conformer"
+      ],
+      "seconds": 17
+    },
+    {
+      "id": "c04",
+      "name": "Rosiglitazone",
+      "expected": "CAUTION",
+      "actual": "NO_GO",
+      "percent": {
+        "go": 9,
+        "caution": 16,
+        "nogo": 75
+      },
+      "coverage": 86,
+      "citations": "39/39",
+      "turns": 6,
+      "runId": "5cdab439-c01b-49ce-9bea-8f8adbcaa736",
+      "structure": [
+        "conformer"
+      ],
+      "seconds": 20
+    },
+    {
+      "id": "c05",
+      "name": "Troglitazone",
+      "expected": "NO_GO",
+      "actual": "NO_GO",
+      "percent": {
+        "go": 11,
+        "caution": 19,
+        "nogo": 70
+      },
+      "coverage": 86,
+      "citations": "64/64",
+      "turns": 6,
+      "runId": "50de56e8-d74c-4b07-aefc-a16abb6681e5",
+      "structure": [
+        "conformer"
+      ],
+      "seconds": 16
+    },
+    {
+      "id": "c06",
+      "name": "Rofecoxib",
+      "expected": "NO_GO",
+      "actual": "NO_GO",
+      "percent": {
+        "go": 10,
+        "caution": 19,
+        "nogo": 71
+      },
+      "coverage": 86,
+      "citations": "36/36",
+      "turns": 6,
+      "runId": "cb8e4e51-fc78-42ac-b0b4-7007e82fc765",
+      "structure": [
+        "conformer"
+      ],
+      "seconds": 16
+    },
+    {
+      "id": "c07",
+      "name": "Celecoxib",
+      "expected": "CAUTION",
+      "actual": "CAUTION",
+      "percent": {
+        "go": 26,
+        "caution": 51,
+        "nogo": 23
+      },
+      "coverage": 100,
+      "citations": "49/49",
+      "turns": 6,
+      "runId": "76c88bc1-3759-495d-b29e-b84e447f8348",
+      "structure": [
+        "conformer"
+      ],
+      "seconds": 18
+    },
+    {
+      "id": "c08",
+      "name": "Terfenadine",
+      "expected": "NO_GO",
+      "actual": "NO_GO",
+      "percent": {
+        "go": 9,
+        "caution": 15,
+        "nogo": 76
+      },
+      "coverage": 86,
+      "citations": "44/46",
+      "turns": 6,
+      "runId": "25947935-5c8b-490b-a39c-ef32df309ce6",
+      "structure": [
+        "conformer"
+      ],
+      "seconds": 19
+    },
+    {
+      "id": "c09",
+      "name": "Fexofenadine",
+      "expected": "GO",
+      "actual": "GO",
+      "percent": {
+        "go": 61,
+        "caution": 28,
+        "nogo": 11
+      },
+      "coverage": 100,
+      "citations": "39/39",
+      "turns": 6,
+      "runId": "a8c50276-8cb9-4976-ba64-4c16394afa27",
+      "structure": [
+        "conformer"
+      ],
+      "seconds": 15
+    },
+    {
+      "id": "c10",
+      "name": "Thalidomide",
+      "expected": "CAUTION",
+      "actual": "NO_GO",
+      "percent": {
+        "go": 7,
+        "caution": 20,
+        "nogo": 73
+      },
+      "coverage": 86,
+      "citations": "46/51",
+      "turns": 6,
+      "runId": "93e6f66b-fe51-4581-90b2-3f84c50dabb0",
+      "structure": [
+        "conformer"
+      ],
+      "seconds": 16
+    },
+    {
+      "id": "c11",
+      "name": "4-Nitrochalcone (hypothetical hit)",
+      "expected": "NO_GO",
+      "actual": "NO_GO",
+      "percent": {
+        "go": 8,
+        "caution": 30,
+        "nogo": 62
+      },
+      "coverage": 67,
+      "citations": "25/29",
+      "turns": 6,
+      "runId": "bf0344e4-b77f-4144-8bd0-a0da9bb8c9c5",
+      "structure": [
+        "conformer"
+      ],
+      "seconds": 17
+    },
+    {
+      "id": "c12",
+      "name": "Catechol-rhodanine (hypothetical hit)",
+      "expected": "NO_GO",
+      "actual": "CAUTION",
+      "percent": {
+        "go": 13,
+        "caution": 66,
+        "nogo": 21
+      },
+      "coverage": 67,
+      "citations": "37/40",
+      "turns": 6,
+      "runId": "82055590-f73a-47a5-bd25-3199370c707f",
+      "structure": [
+        "conformer"
+      ],
+      "seconds": 16
+    }
+  ]
+}

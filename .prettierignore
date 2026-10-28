@@ -1,0 +1,15 @@
+node_modules
+.next
+.venv
+.playwright-mcp
+public/rdkit
+public/brain
+data
+docs/MOLECULEJURY_BRAIN_v1.md
+docs/MOLECULEJURY_BRAIN_v2.md
+lib/rdkit.ts
+lib/chem/alerts.ts
+lib/chem/analyze.ts
+package-lock.json
+tests/fixtures
+next-env.d.ts

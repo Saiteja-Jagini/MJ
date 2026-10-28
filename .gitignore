@@ -1,0 +1,13 @@
+node_modules/
+.next/
+.env*
+!.env.example
+.venv/
+__pycache__/
+*.tsbuildinfo
+test-results/
+playwright-report/
+output/
+data/downloads/
+*.log
+.playwright-mcp/

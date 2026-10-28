@@ -1,0 +1,132 @@
+{
+  "generatedAt": "2026-10-28T08:37:13.739Z",
+  "mode": "Offline rules + trained models + precedents. No live retrieval or LLM calls. Not full-jury accuracy.",
+  "goldAccuracy": 0.5,
+  "cases": [
+    {
+      "name": "Imatinib",
+      "expected": "GO",
+      "actual": "NO_GO",
+      "go": 27,
+      "caution": 24,
+      "nogo": 49
+    },
+    {
+      "name": "Gefitinib",
+      "expected": "GO",
+      "actual": "NO_GO",
+      "go": 27,
+      "caution": 24,
+      "nogo": 49
+    },
+    {
+      "name": "Pioglitazone",
+      "expected": "CAUTION",
+      "actual": "GO",
+      "go": 38,
+      "caution": 28,
+      "nogo": 34
+    },
+    {
+      "name": "Rosiglitazone",
+      "expected": "CAUTION",
+      "actual": "NO_GO",
+      "go": 24,
+      "caution": 28,
+      "nogo": 48
+    },
+    {
+      "name": "Troglitazone",
+      "expected": "NO_GO",
+      "actual": "NO_GO",
+      "go": 29,
+      "caution": 34,
+      "nogo": 37
+    },
+    {
+      "name": "Rofecoxib",
+      "expected": "NO_GO",
+      "actual": "NO_GO",
+      "go": 33,
+      "caution": 33,
+      "nogo": 34
+    },
+    {
+      "name": "Celecoxib",
+      "expected": "CAUTION",
+      "actual": "NO_GO",
+      "go": 32,
+      "caution": 28,
+      "nogo": 40
+    },
+    {
+      "name": "Terfenadine",
+      "expected": "NO_GO",
+      "actual": "NO_GO",
+      "go": 37,
+      "caution": 23,
+      "nogo": 40
+    },
+    {
+      "name": "Fexofenadine",
+      "expected": "GO",
+      "actual": "GO",
+      "go": 40,
+      "caution": 28,
+      "nogo": 32
+    },
+    {
+      "name": "Thalidomide",
+      "expected": "CAUTION",
+      "actual": "NO_GO",
+      "go": 33,
+      "caution": 25,
+      "nogo": 42
+    },
+    {
+      "name": "4-Nitrochalcone (hypothetical hit)",
+      "expected": "NO_GO",
+      "actual": "NO_GO",
+      "go": 27,
+      "caution": 32,
+      "nogo": 41
+    },
+    {
+      "name": "Catechol-rhodanine (hypothetical hit)",
+      "expected": "NO_GO",
+      "actual": "NO_GO",
+      "go": 26,
+      "caution": 30,
+      "nogo": 44
+    }
+  ],
+  "confusionMatrix": {
+    "GO": {
+      "GO": 1,
+      "CAUTION": 0,
+      "NO_GO": 2
+    },
+    "CAUTION": {
+      "GO": 1,
+      "CAUTION": 0,
+      "NO_GO": 3
+    },
+    "NO_GO": {
+      "GO": 0,
+      "CAUTION": 0,
+      "NO_GO": 5
+    }
+  },
+  "clintoxHoldout": {
+    "n": 200,
+    "accuracy": 0.955,
+    "binary": {
+      "tp": 8,
+      "tn": 183,
+      "fp": 4,
+      "fn": 5
+    },
+    "auc": 0.8497,
+    "endpoint": "CT_TOX toxicity classification; not GO/CAUTION/NO_GO truth"
+  }
+}

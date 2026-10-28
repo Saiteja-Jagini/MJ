@@ -1,0 +1,82 @@
+[
+  {"id":"c01","codename":"CASE-01","name":"Imatinib","pubchemName":"imatinib","smiles":"Cc1ccc(NC(=O)c2ccc(CN3CCN(C)CC3)cc2)cc1Nc1nccc(-c2cccnc2)n1","targetName":"ABL1 kinase","uniprot":"P00519","antiUniprot":null,"pdb":"1IEP","hypothetical":false,"ambiguity":1,
+   "truth":{"verdict":"GO","note":"Approved 2001 for CML; transformed care. Rare, manageable cardiac signal."},
+   "curated":[
+    {"kind":"pharm","text":"Type-II kinase inhibitor: binds the inactive (DFG-out) conformation of ABL1; also inhibits KIT and PDGFR.","spoiler":false},
+    {"kind":"tox","text":"A class-associated cardiac signal (heart failure) is described in the literature; incidence is low.","spoiler":false},
+    {"kind":"reg","text":"Approved in 2001 for chronic myeloid leukemia.","spoiler":true}]},
+
+  {"id":"c02","codename":"CASE-02","name":"Gefitinib","pubchemName":"gefitinib","smiles":"COc1cc2ncnc(Nc3ccc(F)c(Cl)c3)c2cc1OCCCN1CCOCC1","targetName":"EGFR kinase","uniprot":"P00533","antiUniprot":null,"pdb":"2ITY","hypothetical":false,"ambiguity":2,
+   "truth":{"verdict":"GO","note":"Approved; indication narrowed to EGFR-mutation-positive NSCLC. Benefit is genotype-dependent."},
+   "curated":[
+    {"kind":"pharm","text":"ATP-competitive EGFR inhibitor; clinical benefit is concentrated in tumors with activating EGFR mutations.","spoiler":false},
+    {"kind":"tox","text":"Rare interstitial lung disease and transaminase elevations have been reported.","spoiler":false},
+    {"kind":"reg","text":"Approved in 2003; indication later narrowed to EGFR-mutation-positive NSCLC.","spoiler":true}]},
+
+  {"id":"c03","codename":"CASE-03","name":"Pioglitazone","pubchemName":"pioglitazone","smiles":"CCc1ccc(CCOc2ccc(CC3SC(=O)NC3=O)cc2)nc1","targetName":"PPARγ","uniprot":"P37231","antiUniprot":null,"pdb":"2PRG","hypothetical":false,"ambiguity":3,
+   "truth":{"verdict":"CAUTION","note":"Marketed with a boxed warning for heart failure; bladder-cancer signal debated. Benefit and risk coexist."},
+   "curated":[
+    {"kind":"pharm","text":"Thiazolidinedione PPARγ agonist that improves insulin sensitivity.","spoiler":false},
+    {"kind":"tox","text":"Class effects include fluid retention, heart-failure risk and fracture risk.","spoiler":false},
+    {"kind":"struct","text":"The bundled PPARγ structure (2PRG) is a related TZD complex (rosiglitazone), not pioglitazone itself.","spoiler":false},
+    {"kind":"reg","text":"Marketed with a boxed warning for congestive heart failure; a bladder-cancer signal remains debated.","spoiler":true}]},
+
+  {"id":"c04","codename":"CASE-04","name":"Rosiglitazone","pubchemName":"rosiglitazone","smiles":"CN(CCOc1ccc(CC2SC(=O)NC2=O)cc1)c1ccccn1","targetName":"PPARγ","uniprot":"P37231","antiUniprot":null,"pdb":"2PRG","hypothetical":false,"ambiguity":3,
+   "truth":{"verdict":"CAUTION","note":"Contested: 2007 meta-analysis flagged MI risk; later re-adjudication was less conclusive; regulatory actions differed by region and changed over time."},
+   "curated":[
+    {"kind":"pharm","text":"TZD-class PPARγ agonist with high PPARγ affinity.","spoiler":false},
+    {"kind":"tox","text":"Class effects include fluid retention and heart-failure risk.","spoiler":false},
+    {"kind":"reg","text":"A 2007 meta-analysis suggested higher myocardial-infarction risk; later trial re-adjudication was less conclusive; regulatory actions differed by region and changed over time.","spoiler":true}]},
+
+  {"id":"c05","codename":"CASE-05","name":"Troglitazone","pubchemName":"troglitazone","smiles":"Cc1c(C)c2c(c(C)c1O)CCC(C)(COc1ccc(CC3SC(=O)NC3=O)cc1)O2","targetName":"PPARγ","uniprot":"P37231","antiUniprot":null,"pdb":"2PRG","hypothetical":false,"ambiguity":2,
+   "truth":{"verdict":"NO_GO","note":"Withdrawn in 2000 after severe drug-induced liver injury."},
+   "curated":[
+    {"kind":"struct","text":"Unlike other glitazones, it carries a vitamin-E-like chromanol tail. No troglitazone co-crystal structure is bundled; the PPARγ structure shown is a related TZD complex.","spoiler":false},
+    {"kind":"tox","text":"Proposed liver-injury mechanisms include reactive quinone metabolites and bile-salt-export-pump (BSEP) inhibition.","spoiler":true},
+    {"kind":"reg","text":"Withdrawn in 2000 after cases of severe drug-induced liver injury.","spoiler":true}]},
+
+  {"id":"c06","codename":"CASE-06","name":"Rofecoxib","pubchemName":"rofecoxib","smiles":"CS(=O)(=O)c1ccc(cc1)C1=C(c2ccccc2)C(=O)OC1","targetName":"COX-2","uniprot":"P35354","antiUniprot":null,"pdb":"5KIR","hypothetical":false,"ambiguity":2,
+   "truth":{"verdict":"NO_GO","note":"Withdrawn in 2004 after long-term trial data showed excess cardiovascular events."},
+   "curated":[
+    {"kind":"pharm","text":"Highly COX-2-selective diarylheterocycle (methylsulfonyl pharmacophore on a butenolide core).","spoiler":false},
+    {"kind":"tox","text":"Selective COX-2 inhibition reduces gastric injury relative to non-selective NSAIDs.","spoiler":false},
+    {"kind":"reg","text":"Long-term trial data showed excess cardiovascular events; withdrawn in 2004.","spoiler":true}]},
+
+  {"id":"c07","codename":"CASE-07","name":"Celecoxib","pubchemName":"celecoxib","smiles":"Cc1ccc(cc1)-c1cc(nn1-c1ccc(cc1)S(N)(=O)=O)C(F)(F)F","targetName":"COX-2","uniprot":"P35354","antiUniprot":null,"pdb":"3LN1","hypothetical":false,"ambiguity":3,
+   "truth":{"verdict":"CAUTION","note":"Still marketed with boxed warnings for cardiovascular and GI risk; trial evidence mixed and dose-dependent."},
+   "curated":[
+    {"kind":"pharm","text":"COX-2-selective diaryl pyrazole carrying a primary sulfonamide.","spoiler":false},
+    {"kind":"tox","text":"Cardiovascular risk for coxibs is dose-dependent and trial evidence is mixed.","spoiler":true},
+    {"kind":"reg","text":"Marketed with boxed warnings for cardiovascular and gastrointestinal risk.","spoiler":true}]},
+
+  {"id":"c08","codename":"CASE-08","name":"Terfenadine","pubchemName":"terfenadine","smiles":"CC(C)(C)c1ccc(cc1)C(O)CCCN1CCC(CC1)C(O)(c1ccccc1)c1ccccc1","targetName":"Histamine H1 receptor","uniprot":"P35367","antiUniprot":"Q12809","antiName":"hERG (KCNH2)","pdb":"3RZE","hypothetical":false,"ambiguity":2,
+   "truth":{"verdict":"NO_GO","note":"Withdrawn in the late 1990s: QT prolongation and torsades de pointes, especially with CYP3A4 inhibitors. Its acid metabolite (fexofenadine) replaced it."},
+   "curated":[
+    {"kind":"pharm","text":"Lipophilic tertiary-amine H1 antihistamine; extensively cleared by CYP3A4 first-pass metabolism to an active carboxylic-acid metabolite.","spoiler":false},
+    {"kind":"tox","text":"The parent compound blocks the hERG potassium channel at low concentrations (QT-prolongation liability).","spoiler":true},
+    {"kind":"reg","text":"Withdrawn in the late 1990s for torsades de pointes risk, especially with CYP3A4 inhibitors.","spoiler":true}]},
+
+  {"id":"c09","codename":"CASE-09","name":"Fexofenadine","pubchemName":"fexofenadine","smiles":"CC(C)(C(=O)O)c1ccc(cc1)C(O)CCCN1CCC(CC1)C(O)(c1ccccc1)c1ccccc1","targetName":"Histamine H1 receptor","uniprot":"P35367","antiUniprot":"Q12809","antiName":"hERG (KCNH2)","pdb":"3RZE","hypothetical":false,"ambiguity":2,
+   "truth":{"verdict":"GO","note":"Marketed since 1996 as a non-sedating, cardiac-safe replacement for terfenadine."},
+   "curated":[
+    {"kind":"pharm","text":"Carboxylic-acid active metabolite of terfenadine; zwitterionic and poorly brain-penetrant (non-sedating).","spoiler":false},
+    {"kind":"tox","text":"Shows weak hERG blockade at therapeutic exposure compared with the parent compound.","spoiler":true},
+    {"kind":"reg","text":"Marketed since 1996 as a safer replacement for terfenadine.","spoiler":true}]},
+
+  {"id":"c10","codename":"CASE-10","name":"Thalidomide","pubchemName":"thalidomide","smiles":"O=C1CCC(N2C(=O)c3ccccc3C2=O)C(=O)N1","targetName":"Cereblon (CRBN)","uniprot":"Q96SW2","antiUniprot":null,"pdb":"4CI1","hypothetical":false,"ambiguity":3,
+   "truth":{"verdict":"CAUTION","note":"Caused severe birth defects in the 1950s–60s; later re-approved for specific indications under strict risk-management programs."},
+   "curated":[
+    {"kind":"pharm","text":"Phthalimide–glutarimide scaffold that binds cereblon and reshapes E3-ligase substrate selection.","spoiler":false},
+    {"kind":"struct","text":"The chiral centre racemizes under physiological conditions; enantiomers cannot be safely separated.","spoiler":false},
+    {"kind":"reg","text":"Caused severe birth defects in the 1950s–60s; later re-approved for specific indications under strict risk-management programs.","spoiler":true}]},
+
+  {"id":"c11","codename":"CASE-11","name":"4-Nitrochalcone (hypothetical hit)","pubchemName":null,"smiles":"O=C(C=Cc1ccc(cc1)[N+](=O)[O-])c1ccccc1","targetName":"ABL1 kinase (putative)","uniprot":"P00519","antiUniprot":null,"pdb":"1IEP","hypothetical":true,"ambiguity":1,
+   "truth":{"verdict":"NO_GO","note":"Aromatic nitro plus enone: textbook reactive/mutagenic alerts; an early-discard compound."},
+   "curated":[
+    {"kind":"pharm","text":"Illustrative phenotypic-screen hit with no ChEMBL bioactivity record. Putative target ABL1; reference structure shown is a known ABL1 inhibitor complex.","spoiler":false}]},
+
+  {"id":"c12","codename":"CASE-12","name":"Catechol-rhodanine (hypothetical hit)","pubchemName":null,"smiles":"O=C1NC(=S)SC1=Cc1ccc(O)c(O)c1","targetName":"ABL1 kinase (putative)","uniprot":"P00519","antiUniprot":null,"pdb":"1IEP","hypothetical":true,"ambiguity":3,
+   "truth":{"verdict":"NO_GO","note":"Classic PAINS frequent-hitter: apparent potency is usually assay interference, not true target engagement."},
+   "curated":[
+    {"kind":"pharm","text":"Illustrative primary biochemical screen: apparent IC50 around 0.4 µM with a steep dose-response. Unvalidated, no orthogonal assay.","spoiler":false}]}
+]
