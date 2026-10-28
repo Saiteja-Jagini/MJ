@@ -1,7 +1,6 @@
 'use client';
 import { useRef, useState, type ClipboardEvent } from 'react';
 import {
-  ArrowUpRight,
   ArrowRight,
   Upload,
   ImagePlus,
@@ -11,25 +10,14 @@ import {
   X,
   LoaderCircle,
   FileText,
-  Sparkles,
   Command,
+  MessageSquareText,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { useJury } from '@/lib/store';
 import { AGENTS } from './agents';
 import { AtomArtwork } from './AtomArtwork';
 import { toast } from 'sonner';
-const examples = [
-  { name: 'Terfenadine', label: 'A safety case study', icon: FlaskConical, type: 'molecule' },
-  { name: 'Fexofenadine', label: 'A molecular comparison', icon: FlaskConical, type: 'molecule' },
-  { name: 'EGFR', label: 'Explore a drug target', icon: Dna, type: 'protein' },
-  {
-    name: 'Catechol-rhodanine',
-    label: 'An illustrative screen hit',
-    icon: Sparkles,
-    type: 'molecule',
-  },
-];
 export function DropZone({ onImage }: { onImage: (url: string | null) => void }) {
   const [text, setText] = useState(''),
     [target, setTarget] = useState(''),
@@ -126,6 +114,7 @@ export function DropZone({ onImage }: { onImage: (url: string | null) => void })
                   { id: 'molecule', label: 'Molecule', icon: FlaskConical },
                   { id: 'protein', label: 'Protein', icon: Dna },
                   { id: 'pair', label: 'Molecule + target', icon: Link2 },
+                  { id: 'research', label: 'Research question', icon: MessageSquareText },
                 ].map((t) => (
                   <button
                     key={t.id}
@@ -137,13 +126,14 @@ export function DropZone({ onImage }: { onImage: (url: string | null) => void })
                   </button>
                 ))}
               </div>
-              <span className="small-label">NEW ANALYSIS</span>
             </div>
             <div className="input-body">
               <label htmlFor="subject-input">
-                {mode === 'protein'
-                  ? 'What target are we investigating?'
-                  : 'What are we investigating?'}
+                {mode === 'research'
+                  ? 'Describe your hypothesis, data, and decision question'
+                  : mode === 'protein'
+                    ? 'What target are we investigating?'
+                    : 'What are we investigating?'}
               </label>
               <textarea
                 id="subject-input"
@@ -151,9 +141,11 @@ export function DropZone({ onImage }: { onImage: (url: string | null) => void })
                 onChange={(e) => setText(e.target.value)}
                 onPaste={paste}
                 placeholder={
-                  mode === 'protein'
-                    ? 'Enter a protein name, UniProt ID, or FASTA sequence…'
-                    : 'Enter a molecule name, SMILES, or composition…'
+                  mode === 'research'
+                    ? 'Example: We found an EGFR inhibitor with 0.4 µM activity in one assay. Is it worth advancing, and what would limit that conclusion?'
+                    : mode === 'protein'
+                      ? 'Enter a protein name, UniProt ID, or FASTA sequence…'
+                      : 'Enter a molecule name, SMILES, or composition…'
                 }
                 onKeyDown={(e) => {
                   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && (text.trim() || file))
@@ -187,7 +179,7 @@ export function DropZone({ onImage }: { onImage: (url: string | null) => void })
                 </div>
               )}
               <div className="input-hint">
-                <span>Names, SMILES, structures, sequences, or images</span>
+                <span>Names, SMILES, structures, sequences, images, or a research question</span>
                 <span>
                   <Command size={11} /> ↵
                 </span>
@@ -243,36 +235,6 @@ export function DropZone({ onImage }: { onImage: (url: string | null) => void })
             <span className="small-check">✓</span> You’ll confirm the identity before the jury
             begins.
           </p>
-          <div className="examples-head">
-            <span>NEED A STARTING POINT?</span>
-            <span>
-              Try an example <ArrowUpRight size={13} />
-            </span>
-          </div>
-          <div className="examples-grid">
-            {examples.map((ex) => (
-              <button
-                key={ex.name}
-                className="example-card"
-                disabled={busy}
-                onClick={() => {
-                  setMode(ex.type);
-                  setText(ex.name);
-                  setFile(null);
-                  onImage(null);
-                }}
-              >
-                <div className={`example-icon ${ex.type}`}>
-                  <ex.icon size={19} />
-                </div>
-                <div>
-                  <strong>{ex.name}</strong>
-                  <span>{ex.label}</span>
-                </div>
-                <ArrowUpRight size={15} className="example-arrow" />
-              </button>
-            ))}
-          </div>
         </div>
         <aside className="jury-ready">
           <div className="jury-ready-title">
@@ -309,27 +271,6 @@ export function DropZone({ onImage }: { onImage: (url: string | null) => void })
           </div>
         </aside>
       </div>
-      <div className="flow-strip">
-        {[
-          { n: '01', title: 'Identify', desc: 'Confirm what you submitted' },
-          { n: '02', title: 'Investigate', desc: 'Gather the scientific evidence' },
-          { n: '03', title: 'Deliberate', desc: 'Watch the specialists debate' },
-          { n: '04', title: 'Understand', desc: 'Explore the verdict in 3D' },
-        ].map((s) => (
-          <div key={s.n}>
-            <span>{s.n}</span>
-            <div>
-              <strong>{s.title}</strong>
-              <p>{s.desc}</p>
-            </div>
-            <ArrowRight size={15} />
-          </div>
-        ))}
-      </div>
-      <footer className="intake-footer">
-        <span>Built on public science. Designed for better research decisions.</span>
-        <span>Hypothesis triage · Not clinical advice</span>
-      </footer>
     </div>
   );
 }

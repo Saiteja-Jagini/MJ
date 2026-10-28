@@ -42,6 +42,12 @@ export function About({
           NO-GO. The chair explains that result and recommends next experiments. The final
           percentages come directly from the Decisions choice distribution, rounded to total 100%.
         </p>
+        <p>
+          For a typed research question, the model extracts the named subject and question for your
+          confirmation. The full typed context is included in the discussion as unverified user
+          input. General model knowledge may explain mechanisms or suggest experiments; it is not a
+          verified source for case-specific claims.
+        </p>
         <div className="formula">evidence + debate → Decisions API → explained verdict</div>
         <p>
           During debate, weighted votes show a provisional direction. They do not override the final
@@ -111,9 +117,9 @@ export function About({
           </li>
         </ul>
         <p className="micro-note">
-          AI provider: OpenAI. The app sends the confirmed subject summary and evidence excerpts for
-          analysis. Uploaded protein coordinates are excluded from model prompts. Analyses are saved
-          to your configured PostgreSQL database.
+          AI provider: OpenAI. The app sends the confirmed subject summary, your typed research
+          context, and evidence excerpts for analysis. Uploaded protein coordinates are excluded
+          from model prompts. Analyses are saved to your configured PostgreSQL database.
         </p>
       </div>
     </Dialog>

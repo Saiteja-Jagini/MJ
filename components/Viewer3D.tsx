@@ -26,7 +26,7 @@ export function Viewer3D({ dossier }: { dossier: Dossier }) {
       .then(($3Dmol) => {
         if (cancelled || !root.current) return;
         try {
-          v = $3Dmol.createViewer(container, { backgroundColor: '#11141f', antialias: true });
+          v = $3Dmol.createViewer(container, { backgroundColor: '#231b1d', antialias: true });
           viewer.current = v;
           v.addModel(structure.text, structure.format ?? 'sdf');
           if (structure.mode === 'pdb' || structure.mode === 'alphafold') {
@@ -154,6 +154,13 @@ export function Viewer3D({ dossier }: { dossier: Dossier }) {
     setSelected(k);
     useJury.getState().focus(`${k}:overview`);
   };
+  if (dossier.subject.kind === 'general_research')
+    return (
+      <section className="viewer-panel no-component-panel" aria-label="Molecular structure status">
+        <div className="panel-heading"><span><Box size={16} /> Molecular structure</span></div>
+        <p>No verified molecule or protein was identified in this question. A chemical or protein structure cannot be shown accurately for this case.</p>
+      </section>
+    );
   return (
     <section className="viewer-panel">
       <div className="panel-heading">

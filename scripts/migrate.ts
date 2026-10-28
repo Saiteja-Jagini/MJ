@@ -6,6 +6,7 @@ async function main() {
   try {
     await c.query('BEGIN');
     await c.query(readFileSync('migrations/0001_initial.sql', 'utf8'));
+    await c.query(readFileSync('migrations/0002_general_research.sql', 'utf8'));
     await c.query('COMMIT');
     console.log('Database migration complete.');
   } catch (e) {

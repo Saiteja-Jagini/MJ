@@ -78,7 +78,9 @@ export const useJury = create<State>((set, get) => ({
       const data = await request('/api/resolve', body, controller.signal);
       if (g !== generation) return;
       const candidates = SubjectSchema.array().parse(data.candidates);
-      set({ candidates, subject: candidates[0], notes: data.notes, stage: 'confirm', busy: false });
+      if (!candidates.length) throw new Error('The analysis could not establish a research subject.');
+      set({ candidates, subject: candidates[0], notes: data.notes, stage: 'dossier', busy: true });
+      await get().convene();
     } catch (e) {
       if (g === generation)
         set({
@@ -99,15 +101,17 @@ export const useJury = create<State>((set, get) => ({
     controller = new AbortController();
     try {
       // Run the document's local chemistry/ML path; the server independently verifies the authoritative dossier.
-      set({ localChecks: 'checking' });
-      void import('./brain-client')
-        .then((m) => m.browserAnalysis(subject))
-        .then(() => {
-          if (g === generation) set({ localChecks: 'verified' });
-        })
-        .catch(() => {
-          if (g === generation) set({ localChecks: 'server' });
-        });
+      if (subject.kind !== 'general_research') {
+        set({ localChecks: 'checking' });
+        void import('./brain-client')
+          .then((m) => m.browserAnalysis(subject))
+          .then(() => {
+            if (g === generation) set({ localChecks: 'verified' });
+          })
+          .catch(() => {
+            if (g === generation) set({ localChecks: 'server' });
+          });
+      }
       const data = await request('/api/dossier', subject, controller.signal);
       if (g !== generation) return;
       const dossier = DossierSchema.parse(data.dossier);

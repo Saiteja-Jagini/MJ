@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { useJury } from '@/lib/store';
 import { Mol2D } from './Mol2D';
 import { Button } from './ui/button';
+import { primeGavelSound } from '@/lib/gavel-sound';
 export function ConfirmCard({ originalImage }: { originalImage: string | null }) {
   const { subject, candidates, notes, busy, select, convene, reset, resolve } = useJury();
   const [editing, setEditing] = useState(false),
@@ -50,6 +51,12 @@ export function ConfirmCard({ originalImage }: { originalImage: string | null })
       )}
       <section className="confirm-panel">
         <div className="confirm-structures">
+          {subject.kind === 'general_research' && (
+            <div className="general-confirm">
+              <strong>Research question</strong>
+              <span>No verified molecule or protein structure was supplied. The analysis will use the full question and cited public findings.</span>
+            </div>
+          )}
           {originalImage && (
             <div className="original-image">
               <img src={originalImage} alt="Your uploaded structure for comparison" />
@@ -79,6 +86,40 @@ export function ConfirmCard({ originalImage }: { originalImage: string | null })
           </span>
           <h2>{subject.title}</h2>
           <p>{subject.question}</p>
+          {subject.userContext && (
+            <div className="research-context">
+              <strong>Your submitted context</strong>
+              {subject.analysisContext?.useCase && (
+                <p>
+                  <b>Use case:</b> {subject.analysisContext.useCase}
+                </p>
+              )}
+              {subject.analysisContext?.issue && (
+                <p>
+                  <b>Issue:</b> {subject.analysisContext.issue}
+                </p>
+              )}
+              {!!subject.analysisContext?.reportedObservations.length && (
+                <p>
+                  <b>Reported observations:</b>{' '}
+                  {subject.analysisContext.reportedObservations.join('; ')}
+                </p>
+              )}
+              <p>{subject.userContext}</p>
+              <small>
+                Statements here remain unverified until supported by the evidence ledger.
+              </small>
+            </div>
+          )}
+          {!!subject.referencedRuns?.length && (
+            <div className="research-context">
+              <strong>Referenced history</strong>
+              <p>{subject.referencedRuns.map((run) => run.title).join(' · ')}</p>
+              <small>
+                Prior conclusions are context; their evidence is checked again for this case.
+              </small>
+            </div>
+          )}
           <dl>
             {subject.components.map((c) => (
               <div key={c.key}>
@@ -99,7 +140,7 @@ export function ConfirmCard({ originalImage }: { originalImage: string | null })
               </div>
             ))}
           </dl>
-          {subject.confidence !== 'high' && (
+          {subject.confidence !== 'high' && subject.kind !== 'general_research' && (
             <div className="warning-note">
               <TriangleAlert size={16} />
               <span>
@@ -137,7 +178,13 @@ export function ConfirmCard({ originalImage }: { originalImage: string | null })
             </button>
           )}
           <div className="confirm-action">
-            <Button onClick={() => void convene()} disabled={busy}>
+            <Button
+              onClick={() => {
+                primeGavelSound();
+                void convene();
+              }}
+              disabled={busy}
+            >
               {busy ? <LoaderCircle size={17} className="spin" /> : <Check size={17} />}Looks right
               · Convene the jury
               <ArrowRight size={17} />

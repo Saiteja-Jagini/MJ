@@ -16,7 +16,7 @@ export const ChairSchema = ModelTurnSchema.extend({
   risks: z.array(z.string()).describe('Exactly three risks or important uncertainties'),
   nextSteps: z
     .array(z.string())
-    .describe('Exactly three concrete experiments or checks that could change the verdict'),
+    .describe('Exactly three case-specific experiments or checks that could change the verdict; cite a supplied E# ID when relevant and never imply the test was already done'),
 });
 export const ImageSchema = z.object({
   items: z.array(
@@ -28,4 +28,20 @@ export const ImageSchema = z.object({
     }),
   ),
   description: z.string(),
+});
+export const ResearchInputSchema = z.object({
+  molecules: z
+    .array(z.string())
+    .describe('Only molecule names or SMILES explicitly present in the input'),
+  target: z.string().describe('Protein or gene explicitly present, or empty string'),
+  question: z.string().describe('The research decision the user asks, in one short sentence'),
+  useCase: z.string().describe('Intended scientific use or goal, or empty string'),
+  issue: z
+    .string()
+    .describe('Specific uncertainty, concern, or failure mode to evaluate, or empty string'),
+  reportedObservations: z
+    .array(z.string())
+    .describe(
+      'Assay values, doses, outcomes, or claims explicitly supplied by the user; do not verify them',
+    ),
 });

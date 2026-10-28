@@ -76,7 +76,7 @@ export async function getRun(id: string, sessionId: string) {
   };
 }
 export async function listRuns(sessionId: string) {
-  return db
+  const rows = await db
     .select({
       id: runs.id,
       title: runs.title,
@@ -84,12 +84,26 @@ export async function listRuns(sessionId: string) {
       status: runs.status,
       coverage: runs.coverage,
       createdAt: runs.createdAt,
-      verdict: runs.verdict,
+      verdictCall: sql<string | null>`${runs.verdict}->>'call'`,
     })
     .from(runs)
     .where(eq(runs.sessionId, sessionId))
-    .orderBy(desc(runs.createdAt))
-    .limit(20);
+    .orderBy(desc(runs.createdAt));
+  return rows.map(({ verdictCall, ...run }) => ({
+    ...run,
+    verdict: verdictCall ? { call: verdictCall } : null,
+  }));
+}
+export async function deleteRun(id: string, sessionId: string) {
+  const [run] = await db
+    .select({ status: runs.status })
+    .from(runs)
+    .where(and(eq(runs.id, id), eq(runs.sessionId, sessionId)))
+    .limit(1);
+  if (!run) throw new AppError('Analysis not found in this browser session.', 404);
+  if (run.status === 'running')
+    throw new AppError('This analysis is still running. Delete it after the jury finishes.', 409);
+  await db.delete(runs).where(and(eq(runs.id, id), eq(runs.sessionId, sessionId)));
 }
 export async function claimRun(id: string, sessionId: string) {
   const changed = await db

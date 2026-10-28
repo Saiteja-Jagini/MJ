@@ -14,6 +14,7 @@ import { analyze } from './chem/analyze';
 import { loadBrain } from './brain-server';
 import { fingerprint, toxProbs, nearest } from './brain';
 import { scoreDrivers, normalize } from './scoring';
+import { researchWebEvidence } from './ai/web-evidence';
 
 const text = (v: any, max = 1800) =>
   typeof v === 'string'
@@ -27,6 +28,43 @@ const text = (v: any, max = 1800) =>
 const finite = (v: any) =>
   v !== null && v !== undefined && v !== '' && Number.isFinite(Number(v)) ? Number(v) : null;
 export async function buildDossier(subject: Subject): Promise<Dossier> {
+  if (subject.kind === 'general_research') {
+    let web: Omit<EvidenceItem, 'id'>[] = [];
+    let webFailed = false;
+    try {
+      web = await researchWebEvidence(
+        `${subject.question}\nUnverified user context: ${subject.userContext ?? ''}`,
+        '',
+      );
+    } catch {
+      webFailed = true;
+    }
+    const evidence: EvidenceItem[] = web.map((item, index) => ({
+      ...item, id: `E${index + 1}`,
+    }));
+    evidence.push({
+      id: `E${evidence.length + 1}`,
+      source: 'Case scope',
+      kind: 'scope',
+      text: 'No molecule or protein structure was verified for this question. Source summaries are web-research annotations, not independently measured case data. User observations remain unverified.',
+      domains: ['all'],
+      quality: 'heuristic',
+      componentKey: '',
+      retrievedAt: new Date().toISOString(),
+    });
+    return DossierSchema.parse({
+      version: 2, subject, evidence, anchors: [], drivers: [],
+      prior: { go: 33, caution: 34, nogo: 33 },
+      coverage: 0, structure: [], chemistry: {},
+      sources: [{
+        name: 'Current public web research',
+        status: web.length ? 'available' : webFailed ? 'error' : 'missing',
+        detail: web.length ? `${web.length} cited source summaries` : 'No cited source was returned',
+        componentKey: '',
+      }],
+      createdAt: new Date().toISOString(),
+    });
+  }
   const rd = await serverRDKit();
   const brain = await loadBrain();
   // Revalidate at the server boundary; intake confirmation cannot inject unchecked structures.
@@ -496,6 +534,27 @@ export async function buildDossier(subject: Subject): Promise<Dossier> {
     componentKey: subject.components[0].key,
     retrievedAt: new Date().toISOString(),
   });
+  try {
+    const web = await researchWebEvidence(
+      `${subject.question}\nVerified components: ${subject.components.map((c) => c.name).join(', ')}.\nUnverified user context: ${subject.userContext ?? ''}`,
+      subject.components[0].key,
+    );
+    for (const item of web)
+      allEvidence.push({ ...item, id: `E${allEvidence.length + 1}` });
+    sources.push({
+      name: 'Current public web research',
+      status: web.length ? 'available' : 'missing',
+      detail: web.length ? `${web.length} cited source summaries` : 'No cited source was returned',
+      componentKey: subject.components[0].key,
+    });
+  } catch {
+    sources.push({
+      name: 'Current public web research',
+      status: 'error',
+      detail: 'Web research was unavailable for this run',
+      componentKey: subject.components[0].key,
+    });
+  }
   let prior = scoreDrivers(drivers);
   if (subject.kind === 'mixture') {
     prior = priors.sort((a, b) => b.nogo - a.nogo || b.caution - a.caution)[0];

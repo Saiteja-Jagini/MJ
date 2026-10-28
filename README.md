@@ -20,7 +20,7 @@ Open **http://localhost:3000**. On Windows PowerShell with script execution disa
 
 The configured container is `moleculejury-postgres`, listening only on `127.0.0.1:15432`. Its data lives in the Docker volume `molecule_jury_moleculejury-data`. `docker compose --env-file .env.local stop` stops it without deleting data. Do not use `down -v` unless you intentionally want to erase the database.
 
-The current workspace already contains the required `.env.local` configuration and generated model artifacts. Secrets are ignored by Git. Add the actual API key directly to that file; never put it in a `NEXT_PUBLIC_` variable.
+Generated model artifacts are committed. Create `.env.local` from `.env.example` and add your actual API key there; never put it in a `NEXT_PUBLIC_` variable. Secrets are ignored by Git.
 
 ```dotenv
 OPENAI_API_KEY=your_key
@@ -37,14 +37,15 @@ DATABASE_URL=postgresql://moleculejury:your_local_password@localhost:15432/molec
 
 ## What is implemented
 
-- Compound names, SMILES, InChI/CAS resolution, protein names/accessions, PDB IDs, FASTA, SDF/MOL, PDB/CIF, PNG/JPEG, compositions, and molecule–target pairs.
-- Explicit identity confirmation and ambiguity selection before the jury starts. Images show the original beside a verified molecular rendering.
+- Compound names, SMILES, InChI/CAS resolution, protein names/accessions, PDB IDs, FASTA, SDF/MOL, PDB/CIF, PNG/JPEG, compositions, molecule–target pairs, and prose research questions.
+- Free-form questions and supported attachments proceed directly to the jury. Verified molecular identities receive a chemical or protein structure; unverified cases never receive an invented structure.
 - RDKit descriptors, original v1 SMARTS alerts, hERG structural heuristic, four trained toxicity models, applicability flags, and the three nearest known compounds.
 - Live PubChem, ChEMBL, UniProt, RCSB, AlphaFold, Open Targets, openFDA, and Europe PMC retrieval. Failed lookups are visible and reduce applicable coverage.
 - Atom, Venom, and Lock run in parallel. Doubt cross-examines; the targeted specialist rebuts; OpenAI Decisions evaluates the dossier and debate; Gavel explains its selected outcome with reasons, risks, and next steps. Interrupted runs resume from saved successful turns.
 - Final GO/CAUTION/NO-GO percentages are the Decisions API choice probabilities, rounded to exactly 100. Confidence is the separate API confidence field. Weighted votes remain provisional during debate and for legacy saved runs.
+- Prose questions are parsed by the configured fast model and resolved against the identity pipeline. The full typed context reaches the jury and Decisions as unverified user input. The final view presents a brief review, verified structure, and Decision API assessment in three cards, followed by suggestions and citations.
 - 3Dmol molecular/protein views, 2D fallback, computed/experimental/predicted provenance labels, atom/residue focus, pLDDT colouring for AlphaFold, and explicit no-docking labels for pairs.
-- Desktop Chamber and mobile Debate / 3D / Verdict tabs; keyboard-accessible dialogs; reduced-motion support; verdict-dependent accent colours.
+- A responsive chamber presents the five agent dialogues during deliberation. The final cards adapt to desktop and mobile layouts; reduced-motion support and verdict-dependent accent colours remain available.
 - PostgreSQL-backed analysis history, source ledger, validated dossier snapshots, ordered debate turns, and verdict persistence scoped to an anonymous browser session.
 
 No v1 prediction game, leaderboard, voice, analog generation, or mechanism illustrations are added. Those are not part of the v2 core.

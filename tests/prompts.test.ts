@@ -53,4 +53,18 @@ describe('specialist context boundaries', () => {
     expect(prompt).not.toContain('PRIVATE_COORDINATES');
     expect(prompt).not.toContain('PRIVATE_SEQUENCE');
   });
+  it('carries the user research question as unverified context', () => {
+    const withContext = {
+      ...dossier,
+      subject: {
+        ...dossier.subject,
+        question: 'Should this EGFR hit advance after a single assay?',
+        userContext: 'EGFR hit was reported at 0.4 µM in one assay.',
+      },
+    };
+    const prompt = turnPrompt('chair', withContext, []);
+    expect(prompt).toContain('0.4 µM');
+    expect(prompt).toContain('unverified user-supplied context');
+    expect(prompt).toContain('Should this EGFR hit advance');
+  });
 });

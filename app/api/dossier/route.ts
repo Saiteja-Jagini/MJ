@@ -15,9 +15,10 @@ export async function POST(req: Request) {
     let runId: string;
     try {
       runId = await saveDossier(dossier, session);
-    } catch {
+    } catch (error) {
+      console.error('Dossier persistence failed:', error instanceof Error ? error.message : error);
       throw new AppError(
-        'The dossier is ready, but PostgreSQL is unavailable. Start the database and retry; the jury has not been charged.',
+        'The dossier could not be saved. Check the database migration and retry; the jury has not been charged.',
         503,
       );
     }

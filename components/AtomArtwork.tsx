@@ -41,18 +41,18 @@ export function AtomArtwork() {
     >
       <defs>
         <radialGradient id="atom-violet" cx="30%" cy="25%">
-          <stop stopColor="#d9c8ff" />
-          <stop offset=".4" stopColor="#9a7be3" />
-          <stop offset="1" stopColor="#43365e" />
+          <stop stopColor="#e8d2b5" />
+          <stop offset=".4" stopColor="#934d49" />
+          <stop offset="1" stopColor="#590907" />
         </radialGradient>
         <radialGradient id="atom-cyan" cx="30%" cy="25%">
-          <stop stopColor="#c2f4ff" />
-          <stop offset=".4" stopColor="#65b8ce" />
-          <stop offset="1" stopColor="#254858" />
+          <stop stopColor="#e8d2b5" />
+          <stop offset=".4" stopColor="#a5a79b" />
+          <stop offset="1" stopColor="#62695f" />
         </radialGradient>
         <linearGradient id="bond" x1="0" y1="0" x2="1" y2="1">
-          <stop stopColor="#76638d" />
-          <stop offset="1" stopColor="#b5a5cb" />
+          <stop stopColor="#590907" />
+          <stop offset="1" stopColor="#e8d2b5" />
         </linearGradient>
         <filter id="glow">
           <feGaussianBlur stdDeviation="20" />
@@ -63,7 +63,7 @@ export function AtomArtwork() {
         cy="143"
         rx="105"
         ry="65"
-        fill="#9878f8"
+        fill="#590907"
         opacity=".13"
         filter="url(#glow)"
       />
@@ -96,11 +96,11 @@ export function AtomArtwork() {
         cy="140"
         r="117"
         fill="none"
-        stroke="#b9a1ed"
+        stroke="#590907"
         strokeOpacity=".1"
         strokeDasharray="3 7"
       />
-      <circle cx="215" cy="140" r="92" fill="none" stroke="#b9a1ed" strokeOpacity=".08" />
+      <circle cx="215" cy="140" r="92" fill="none" stroke="#590907" strokeOpacity=".08" />
     </svg>
   );
 }

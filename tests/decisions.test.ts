@@ -18,6 +18,23 @@ const raw = () => ({
     },
   ],
 });
+const scoredRaw = () => ({
+  ...raw(),
+  answers: [
+    ...raw().answers,
+    ...(['evidence_support', 'use_case_fit', 'liability'] as const).map((name) => ({
+      type: 'score',
+      name,
+      score: 1.5,
+      confidence: 0.7,
+      probabilities: [0, 1, 2, 3].map((value) => ({
+        value,
+        label: ['Absent', 'Preliminary', 'Moderate', 'Strong'][value],
+        probability: 0.25,
+      })),
+    })),
+  ],
+});
 const dossier = {
   subject: {
     title: 'Test',
@@ -84,13 +101,59 @@ describe('Decisions API', () => {
     const request = JSON.stringify(decisionRequest(dossier, []));
     expect(request).not.toContain('PRIVATE_');
     expect(request).toContain('gpt-6-luna');
+    expect(request).toContain('evidence_support');
+    expect(request).toContain('use_case_fit');
+    expect(request).toContain('liability');
+  });
+  it('keeps full issue, use case, observations, evidence quality, and source status in the decision context', () => {
+    const caseDossier = {
+      ...dossier,
+      subject: {
+        ...dossier.subject,
+        userContext: 'Observed a 0.4 µM response in one assay.',
+        analysisContext: {
+          useCase: 'EGFR research screen',
+          issue: 'Off-target activity',
+          reportedObservations: ['0.4 µM in one assay'],
+        },
+      },
+      coverage: 42,
+      evidence: [
+        {
+          id: 'E1',
+          componentKey: 'c0',
+          source: 'ChEMBL',
+          kind: 'activity',
+          quality: 'measured',
+          text: 'Measured activity',
+          url: 'https://example.com/e1',
+        },
+      ],
+      sources: [{ name: 'PubChem', status: 'missing', detail: 'Unavailable', componentKey: 'c0' }],
+    } as unknown as Dossier;
+    const input = decisionRequest(caseDossier, []).input;
+    for (const value of [
+      'EGFR research screen',
+      'Off-target activity',
+      '0.4 µM',
+      'measured',
+      'PubChem',
+      '42',
+    ])
+      expect(input).toContain(value);
+  });
+  it('parses all scored dimensions and rejects incomplete metric responses', () => {
+    const result = scoredRaw();
+    expect(parseDecision(result, null).metrics?.use_case_fit.score).toBe(1.5);
+    result.answers.pop();
+    expect(() => parseDecision(result, null)).toThrow('incomplete scoring');
   });
   it('calls the real endpoint contract and never substitutes a result on failure', async () => {
     vi.stubEnv('OPENAI_API_KEY', 'test-placeholder');
     const fetcher = vi
       .fn()
       .mockResolvedValue(
-        new Response(JSON.stringify(raw()), { headers: { 'x-request-id': 'req_123' } }),
+        new Response(JSON.stringify(scoredRaw()), { headers: { 'x-request-id': 'req_123' } }),
       );
     vi.stubGlobal('fetch', fetcher);
     expect((await decide(dossier, [])).requestId).toBe('req_123');

@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const roles = ['chemist', 'toxicologist', 'pharmacologist', 'skeptic', 'chair'] as const;
 export const RoleSchema = z.enum(roles);
 export const VerdictSchema = z.enum(['GO', 'CAUTION', 'NO_GO']);
-export const KindSchema = z.enum(['small_molecule', 'protein', 'complex', 'mixture']);
+export const KindSchema = z.enum(['small_molecule', 'protein', 'complex', 'mixture', 'general_research']);
 export type Role = z.infer<typeof RoleSchema>;
 export type Verdict = z.infer<typeof VerdictSchema>;
 export type Kind = z.infer<typeof KindSchema>;
@@ -75,10 +75,32 @@ export const SubjectSchema = z
     kind: KindSchema,
     title: z.string().min(1).max(500),
     question: z.string().min(1).max(500),
-    components: z.array(ComponentSchema).min(1).max(8),
+    components: z.array(ComponentSchema).max(8),
     origin: z.enum(['text', 'smiles', 'file', 'image']),
     understood: z.string().max(2000),
     confidence: z.enum(['high', 'medium', 'low']),
+    userContext: z.string().max(20000).optional(),
+    analysisContext: z
+      .object({
+        useCase: z.string().max(1000),
+        issue: z.string().max(1000),
+        reportedObservations: z.array(z.string().max(500)).max(12),
+      })
+      .optional(),
+    referencedRuns: z
+      .array(
+        z.object({
+          id: z.string().uuid(),
+          title: z.string().max(500),
+          question: z.string().max(500),
+          call: VerdictSchema.nullable(),
+          headline: z.string().max(1000),
+          reasons: z.array(z.string().max(1000)).max(3),
+          createdAt: z.string().datetime(),
+        }),
+      )
+      .max(4)
+      .optional(),
   })
   .strict()
   .superRefine((s, c) => {
@@ -95,6 +117,8 @@ export const SubjectSchema = z
       c.addIssue({ code: 'custom', message: 'Molecule cannot be a target' });
     if (s.kind === 'mixture' && (s.components.length < 2 || targets))
       c.addIssue({ code: 'custom', message: 'Mixture requires at least two ingredients' });
+    if (s.kind === 'general_research' && s.components.length !== 0)
+      c.addIssue({ code: 'custom', message: 'General research has no verified molecular component' });
   });
 export type Component = z.infer<typeof ComponentSchema>;
 export type Subject = z.infer<typeof SubjectSchema>;
@@ -175,7 +199,7 @@ export const DossierSchema = z
     if (ids.size !== d.evidence.length || anchors.size !== d.anchors.length)
       c.addIssue({ code: 'custom', message: 'Duplicate evidence or anchor ID' });
     for (const x of [...d.evidence, ...d.anchors, ...d.structure])
-      if (!keys.has(x.componentKey))
+      if (!keys.has(x.componentKey) && !(d.subject.kind === 'general_research' && x.componentKey === ''))
         c.addIssue({ code: 'custom', message: 'Unknown component reference' });
     for (const x of d.drivers) {
       if (x.anchorId && !anchors.has(x.anchorId))
@@ -206,6 +230,21 @@ export const DecisionSchema = z.object({
       'Decision probabilities must sum to one',
     ),
   confidence: z.number().finite().min(0).max(1),
+  metrics: z
+    .record(
+      z.object({
+        score: z.number().finite().min(0).max(3),
+        confidence: z.number().finite().min(0).max(1),
+        probabilities: z.array(
+          z.object({
+            label: z.string(),
+            value: z.number().int().min(0).max(3),
+            probability: z.number().finite().min(0).max(1),
+          }),
+        ),
+      }),
+    )
+    .optional(),
   evaluatedAt: z.string().datetime(),
 });
 export type Decision = z.infer<typeof DecisionSchema>;
@@ -270,4 +309,5 @@ export const QUESTIONS: Record<Kind, string> = {
   protein: 'Is this a tractable, reasonably safe drug target?',
   complex: 'Is this molecule a plausible, safe modulator of this target?',
   mixture: 'Is this combination plausible and low-risk to take forward?',
+  general_research: 'What does the available evidence support for this question?',
 };

@@ -1,37 +1,43 @@
 'use client';
 import { useEffect, useState } from 'react';
-import {
-  Plus,
-  History,
-  BookOpen,
-  ArrowUpRight,
-  ChevronRight,
-  FlaskConical,
-  Layers,
-  LoaderCircle,
-} from 'lucide-react';
+import { History, LoaderCircle, Plus, LayoutDashboard } from 'lucide-react';
 import { useJury } from '@/lib/store';
 import { Brand } from './Brand';
-import { DropZone } from './DropZone';
-import { ConfirmCard } from './ConfirmCard';
+import { AnalysisInput, type HistoryReference } from './AnalysisInput';
 import { Chamber } from './Chamber';
-import { About } from './About';
-import { Dialog } from './ui/dialog';
+import { ReportView } from './ReportView';
+import { Viewer3D } from './Viewer3D';
+import { EvidenceLedger } from './EvidenceLedger';
+import { Overview } from './Overview';
+import { HistoryPage, type SavedRun } from './HistoryPage';
+import { DossierSchema, FinalSchema, TurnSchema, type Dossier, type FinalVerdict, type Turn } from '@/lib/types';
+
+type Page = 'overview' | 'analysis' | 'history';
+
 export function Shell() {
-  const stage = useJury((s) => s.stage),
-    subject = useJury((s) => s.subject),
-    verdict = useJury((s) => s.verdict),
-    busy = useJury((s) => s.busy);
-  const [about, setAbout] = useState(false),
-    [history, setHistory] = useState(false),
-    [runs, setRuns] = useState<any[]>([]),
-    [historyError, setHistoryError] = useState(''),
-    [historyLoading, setHistoryLoading] = useState(false),
-    [original, setOriginal] = useState<string | null>(null),
-    [health, setHealth] = useState<{ database: boolean; ai: boolean; brain: boolean } | null>(null);
+  const stage = useJury((s) => s.stage);
+  const subject = useJury((s) => s.subject);
+  const dossier = useJury((s) => s.dossier);
+  const verdict = useJury((s) => s.verdict);
+  const runId = useJury((s) => s.runId);
+  const [page, setPage] = useState<Page>('overview');
+  const [runs, setRuns] = useState<SavedRun[]>([]);
+  const [historyError, setHistoryError] = useState('');
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [historyRun, setHistoryRun] = useState<SavedRun | null>(null);
+  const [historyData, setHistoryData] = useState<{ dossier: Dossier; verdict: FinalVerdict | null; turns: Turn[] } | null>(null);
+  const [references, setReferences] = useState<HistoryReference[]>([]);
+  const [draft, setDraft] = useState('');
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [analysisKey, setAnalysisKey] = useState(0);
+  const [health, setHealth] = useState<{ database: boolean; ai: boolean; brain: boolean } | null>(
+    null,
+  );
+
   useEffect(() => {
     fetch('/api/health')
-      .then((r) => r.json())
+      .then((response) => response.json())
       .then(setHealth)
       .catch(() => {});
   }, []);
@@ -39,26 +45,16 @@ export function Shell() {
     document.documentElement.dataset.verdict = verdict?.call ?? 'neutral';
   }, [verdict]);
   useEffect(() => {
-    if (['idle', 'confirm', 'dossier'].includes(stage))
-      window.scrollTo({ top: 0, behavior: 'instant' });
-  }, [stage]);
-  useEffect(
-    () => () => {
-      if (original) URL.revokeObjectURL(original);
-    },
-    [original],
-  );
-  useEffect(() => {
-    if (!history) return;
+    if (page !== 'history') return;
     let alive = true;
     fetch('/api/runs')
-      .then(async (r) => {
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.error);
-        if (alive) setRuns(d.runs);
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+        if (alive) setRuns(data.runs);
       })
-      .catch((e) => {
-        if (alive) setHistoryError(e.message);
+      .catch((error) => {
+        if (alive) setHistoryError(error.message);
       })
       .finally(() => {
         if (alive) setHistoryLoading(false);
@@ -66,167 +62,196 @@ export function Shell() {
     return () => {
       alive = false;
     };
-  }, [history]);
-  const reset = () => {
-    useJury.getState().reset();
-    setOriginal(null);
+  }, [page]);
+  useEffect(() => {
+    if (page !== 'analysis') return;
+    if (dossier && !verdict) {
+      const timer = window.setTimeout(
+        () => document.querySelector('.jury-stage')?.scrollIntoView({ behavior: 'smooth' }),
+        150,
+      );
+      return () => window.clearTimeout(timer);
+    }
+  }, [page, stage, dossier, verdict]);
+
+  const showAnalysis = () => {
+    setHistoryRun(null);
+    setPage('analysis');
+    window.scrollTo({ top: 0, behavior: 'instant' });
   };
   const showHistory = () => {
-    setHistoryError('');
     setHistoryLoading(true);
-    setHistory(true);
+    setHistoryError('');
+    setHistoryRun(null);
+    setHistoryData(null);
+    setPage('history');
+    window.scrollTo(0, 0);
   };
+  const openHistory = async (run: SavedRun) => {
+    setHistoryLoading(true);
+    setHistoryError('');
+    try {
+      const response = await fetch(`/api/runs/${run.id}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? 'Unable to open this project.');
+      setHistoryData({
+        dossier: DossierSchema.parse(data.dossier),
+        verdict: data.verdict ? FinalSchema.parse(data.verdict) : null,
+        turns: TurnSchema.array().parse(data.turns),
+      });
+      setHistoryRun(run);
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    } catch (error) {
+      setHistoryError(error instanceof Error ? error.message : 'Unable to open this project.');
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+  const deleteHistory = async (run: SavedRun) => {
+    setDeletingId(run.id);
+    setHistoryError('');
+    try {
+      const response = await fetch(`/api/runs/${run.id}`, { method: 'DELETE' });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? 'Unable to delete this analysis.');
+      setRuns((current) => current.filter((item) => item.id !== run.id));
+      if (historyRun?.id === run.id) {
+        setHistoryRun(null);
+        setHistoryData(null);
+      }
+    } catch (error) {
+      setHistoryError(error instanceof Error ? error.message : 'Unable to delete this analysis.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+  const referenceHistory = (items: HistoryReference[]) => {
+    useJury.getState().reset();
+    setDraft('');
+    setAttachment(null);
+    setReferences(items);
+    setHistoryRun(null);
+    setAnalysisKey((value) => value + 1);
+    setPage('analysis');
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  };
+
   return (
     <div className="app-shell">
-      <aside className="sidebar">
-        <button className="sidebar-brand" onClick={reset} aria-label="MoleculeJury home">
-          <Brand compact />
-        </button>
-        <div className="sidebar-main">
-          <button
-            className="rail-button active"
-            onClick={reset}
-            aria-label="New analysis"
-            title="New analysis"
-          >
-            <Plus size={22} />
-          </button>
-          <button
-            className="rail-button"
-            onClick={showHistory}
-            aria-label="Recent analyses"
-            title="Recent analyses"
-          >
-            <History size={21} />
-          </button>
-          <button
-            className="rail-button"
-            onClick={() => setAbout(true)}
-            aria-label="Methods and evidence"
-            title="Methods and evidence"
-          >
-            <BookOpen size={20} />
-          </button>
-        </div>
-        <div className="sidebar-bottom">
-          <span
-            className={`rail-status ${health?.database ? 'online' : ''}`}
-            title={health?.database ? 'PostgreSQL connected' : 'Checking database'}
-          />
-          <span className="rail-version">V2</span>
-        </div>
-      </aside>
-      <div className="workspace">
-        <header className="topbar">
+      <header className="topbar">
+        <button
+          className="topbar-brand"
+          onClick={() => {
+            setPage('overview');
+            window.scrollTo(0, 0);
+          }}
+          aria-label="MoleculeJury overview"
+        >
           <Brand />
-          <div className="breadcrumb">
-            <span>Workspace</span>
-            <ChevronRight size={13} />
-            <strong>
-              {stage === 'idle' || stage === 'resolving'
-                ? 'New analysis'
-                : stage === 'confirm'
-                  ? 'Confirm identity'
-                  : 'Jury chamber'}
-            </strong>
-          </div>
-          <div className="topbar-right">
-            <span className="system-status">
-              <span
-                className={health?.database && health?.ai ? 'status-dot' : 'status-dot pending'}
-              />
-              {health?.database && health?.ai
-                ? 'Workspace ready'
-                : health
-                  ? 'Setup needs attention'
-                  : 'Connecting workspace'}
-            </span>
-            <button className="about-link" onClick={() => setAbout(true)}>
-              How it works
-              <ArrowUpRight size={14} />
-            </button>
-            <span className="user-avatar">MJ</span>
-          </div>
-        </header>
-        <main>
-          {stage === 'idle' || stage === 'resolving' ? (
-            <DropZone onImage={setOriginal} />
-          ) : stage === 'confirm' ? (
-            <ConfirmCard originalImage={original} />
-          ) : subject ? (
-            <Chamber />
-          ) : (
-            <div className="loading-page">
-              <LoaderCircle className="spin" />
-              Restoring analysis…
-            </div>
-          )}
-        </main>
-        <div className="mobile-bottom-nav">
-          <button onClick={reset}>
-            <Plus size={19} />
-            Analyze
+        </button>
+        <nav className="topnav-actions" aria-label="Main navigation">
+          <button
+            className={`topnav-button ${page === 'overview' ? 'active' : ''}`}
+            aria-label="Overview"
+            onClick={() => {
+              setPage('overview');
+              window.scrollTo(0, 0);
+            }}
+          >
+            <LayoutDashboard size={17} />
+            <span>Overview</span>
           </button>
-          <button onClick={showHistory}>
-            <History size={19} />
-            History
+          <button
+            className={`topnav-button ${page === 'analysis' ? 'active' : ''}`}
+            aria-label="New analysis"
+            onClick={showAnalysis}
+          >
+            <Plus size={18} />
+            <span>New analysis</span>
           </button>
-          <button onClick={() => setAbout(true)}>
-            <BookOpen size={19} />
-            Methods
+          <button
+            className={`topnav-button ${page === 'history' ? 'active' : ''}`}
+            aria-label="History"
+            onClick={showHistory}
+          >
+            <History size={18} />
+            <span>History</span>
           </button>
+        </nav>
+        <div className="topbar-right">
+          <span className="system-status">
+            <span
+              className={health?.database && health?.ai ? 'status-dot' : 'status-dot pending'}
+            />
+            {health?.database && health?.ai
+              ? 'Ready'
+              : health
+                ? 'Setup needs attention'
+                : 'Connecting'}
+          </span>
         </div>
-      </div>
-      <About open={about} onOpenChange={setAbout} />
-      <Dialog
-        open={history}
-        onOpenChange={setHistory}
-        title="Your recent investigations"
-        description="Analyses saved to PostgreSQL for this browser session."
-      >
-        <div className="history-list">
-          {historyLoading ? (
-            <div className="empty-view">
-              <LoaderCircle className="spin" />
-              Loading saved analyses…
+      </header>
+      <main className="app-main">
+        {page === 'overview' ? (
+          <Overview onStart={showAnalysis} />
+        ) : page === 'history' && historyRun && historyData ? (
+          <div className="history-project">
+            <div className="history-breadcrumb">
+              <button onClick={() => { setHistoryRun(null); setHistoryData(null); }}>History</button>
+              <span>›</span>
+              <strong>{historyRun.title}</strong>
             </div>
-          ) : historyError ? (
-            <p className="inline-error">{historyError}</p>
-          ) : runs.length === 0 ? (
-            <div className="empty-view">
-              <Layers size={35} />
-              <strong>A clean slate.</strong>
-              <span>Your completed and interrupted analyses will appear here.</span>
+            <div className="history-project-meta">
+              <span>{new Date(historyRun.createdAt).toLocaleString()}</span>
+              <button onClick={() => referenceHistory([historyRun])}>Use as context in a new analysis</button>
             </div>
-          ) : (
-            runs.map((r) => (
-              <button
-                key={r.id}
-                disabled={busy}
-                className="history-row"
-                onClick={() => {
-                  setHistory(false);
-                  void useJury.getState().restore(r.id);
-                }}
-              >
-                <span className="example-icon">
-                  <FlaskConical size={19} />
-                </span>
-                <span>
-                  <strong>{r.title}</strong>
-                  <small>
-                    {new Date(r.createdAt).toLocaleString()} · {r.coverage}% evidence coverage
-                  </small>
-                </span>
-                <span className="history-verdict" data-call={r.verdict?.call}>
-                  {r.verdict?.call?.replace('_', '-') ?? r.status}
-                </span>
-                <ChevronRight size={16} />
-              </button>
-            ))
-          )}
-        </div>
-      </Dialog>
+            {historyData.verdict ? (
+              <ReportView dossier={historyData.dossier} verdict={historyData.verdict} turns={historyData.turns} archived />
+            ) : (
+              <div className="archived-incomplete">
+                <h1>{historyData.dossier.subject.title}</h1>
+                <p>{historyData.dossier.subject.userContext || historyData.dossier.subject.question}</p>
+                <p>This saved analysis has no final decision.</p>
+                <Viewer3D dossier={historyData.dossier} />
+                <EvidenceLedger dossier={historyData.dossier} />
+              </div>
+            )}
+          </div>
+        ) : page === 'history' ? (
+          <HistoryPage
+            runs={runs}
+            loading={historyLoading}
+            error={historyError}
+            onOpen={(run) => void openHistory(run)}
+            onReference={referenceHistory}
+            onDelete={deleteHistory}
+            deletingId={deletingId}
+          />
+        ) : (
+          <div className="analysis-page">
+            <AnalysisInput
+              key={analysisKey}
+              value={draft}
+              onChange={setDraft}
+              file={attachment}
+              onFileChange={setAttachment}
+              references={references}
+              onRemoveReference={(id) =>
+                setReferences((items) => items.filter((item) => item.id !== id))
+              }
+            />
+            <div id="analysis-flow">
+              {subject ? (
+                <Chamber key={runId ?? subject.id} />
+              ) : stage === 'resolving' ? (
+                <div className="loading-page">
+                  <LoaderCircle className="spin" /> Identifying input…
+                </div>
+              ) : null}
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

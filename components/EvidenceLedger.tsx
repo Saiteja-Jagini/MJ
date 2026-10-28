@@ -34,14 +34,13 @@ export function EvidenceLedger({ dossier }: { dossier: Dossier }) {
           <span>
             {missing.length} source lookups returned no usable data. Coverage reflects these gaps.
           </span>
-          <details>
-            <summary>View gaps</summary>
+          <div className="source-gaps">
             {missing.map((s, i) => (
               <p key={i}>
                 {s.name} ({s.componentKey}): {s.detail}
               </p>
             ))}
-          </details>
+          </div>
         </div>
       )}
       <div className="ledger-list">

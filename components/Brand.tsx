@@ -9,7 +9,7 @@ export function Brand({ compact = false }: { compact?: boolean }) {
       </span>
       {!compact && (
         <span>
-          Molecule<span className="brand-light">Jury</span>
+          <strong>M</strong>olecule<strong>J</strong>ury
           <sup>LAB</sup>
         </span>
       )}
